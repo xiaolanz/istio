@@ -145,7 +145,7 @@ func TestConfig(t *testing.T) {
 	stop := make(chan struct{})
 	go ctl.Run(stop)
 
-	if len(ctl.ConfigDescriptor()) == 0 {
+	if len(ctl.ConfigGroupVersion()) == 0 {
 		t.Errorf("must support ingress type")
 	}
 

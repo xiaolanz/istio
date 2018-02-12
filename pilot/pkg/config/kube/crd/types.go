@@ -26,7 +26,7 @@ var knownTypes = map[string]struct {
 		object: &MockConfig{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "MockConfig",
-				APIVersion: ResourceGroup(&model.MockConfig) + "/" + model.MockConfig.Version,
+				APIVersion: model.MockConfig.Group() + "/" + model.MockConfig.Version(),
 			},
 		},
 		collection: &MockConfigList{},
@@ -36,7 +36,7 @@ var knownTypes = map[string]struct {
 		object: &RouteRule{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "RouteRule",
-				APIVersion: ResourceGroup(&model.RouteRule) + "/" + model.RouteRule.Version,
+				APIVersion: model.RouteRule.Group() + "/" + model.RouteRule.Version(),
 			},
 		},
 		collection: &RouteRuleList{},
@@ -46,7 +46,7 @@ var knownTypes = map[string]struct {
 		object: &V1alpha2RouteRule{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "V1alpha2RouteRule",
-				APIVersion: ResourceGroup(&model.V1alpha2RouteRule) + "/" + model.V1alpha2RouteRule.Version,
+				APIVersion: model.V1alpha2RouteRule.Group() + "/" + model.V1alpha2RouteRule.Version(),
 			},
 		},
 		collection: &V1alpha2RouteRuleList{},
@@ -56,7 +56,7 @@ var knownTypes = map[string]struct {
 		object: &IngressRule{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "IngressRule",
-				APIVersion: ResourceGroup(&model.IngressRule) + "/" + model.IngressRule.Version,
+				APIVersion: model.IngressRule.Group() + "/" + model.IngressRule.Version(),
 			},
 		},
 		collection: &IngressRuleList{},
@@ -66,7 +66,7 @@ var knownTypes = map[string]struct {
 		object: &Gateway{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "Gateway",
-				APIVersion: ResourceGroup(&model.Gateway) + "/" + model.Gateway.Version,
+				APIVersion: model.Gateway.Group() + "/" + model.Gateway.Version(),
 			},
 		},
 		collection: &GatewayList{},
@@ -76,7 +76,7 @@ var knownTypes = map[string]struct {
 		object: &EgressRule{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "EgressRule",
-				APIVersion: ResourceGroup(&model.EgressRule) + "/" + model.EgressRule.Version,
+				APIVersion: model.EgressRule.Group() + "/" + model.EgressRule.Version(),
 			},
 		},
 		collection: &EgressRuleList{},
@@ -86,7 +86,7 @@ var knownTypes = map[string]struct {
 		object: &ExternalService{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "ExternalService",
-				APIVersion: ResourceGroup(&model.ExternalService) + "/" + model.ExternalService.Version,
+				APIVersion: model.ExternalService.Group() + "/" + model.ExternalService.Version(),
 			},
 		},
 		collection: &ExternalServiceList{},
@@ -96,7 +96,7 @@ var knownTypes = map[string]struct {
 		object: &DestinationPolicy{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "DestinationPolicy",
-				APIVersion: ResourceGroup(&model.DestinationPolicy) + "/" + model.DestinationPolicy.Version,
+				APIVersion: model.DestinationPolicy.Group() + "/" + model.DestinationPolicy.Version(),
 			},
 		},
 		collection: &DestinationPolicyList{},
@@ -106,7 +106,7 @@ var knownTypes = map[string]struct {
 		object: &DestinationRule{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "DestinationRule",
-				APIVersion: ResourceGroup(&model.DestinationRule) + "/" + model.DestinationRule.Version,
+				APIVersion: model.DestinationRule.Group() + "/" + model.DestinationRule.Version(),
 			},
 		},
 		collection: &DestinationRuleList{},
@@ -116,7 +116,7 @@ var knownTypes = map[string]struct {
 		object: &HTTPAPISpec{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "HTTPAPISpec",
-				APIVersion: ResourceGroup(&model.HTTPAPISpec) + "/" + model.HTTPAPISpec.Version,
+				APIVersion: model.HTTPAPISpec.Group() + "/" + model.HTTPAPISpec.Version(),
 			},
 		},
 		collection: &HTTPAPISpecList{},
@@ -126,7 +126,7 @@ var knownTypes = map[string]struct {
 		object: &HTTPAPISpecBinding{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "HTTPAPISpecBinding",
-				APIVersion: ResourceGroup(&model.HTTPAPISpecBinding) + "/" + model.HTTPAPISpecBinding.Version,
+				APIVersion: model.HTTPAPISpecBinding.Group() + "/" + model.HTTPAPISpecBinding.Version(),
 			},
 		},
 		collection: &HTTPAPISpecBindingList{},
@@ -136,7 +136,7 @@ var knownTypes = map[string]struct {
 		object: &QuotaSpec{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "QuotaSpec",
-				APIVersion: ResourceGroup(&model.QuotaSpec) + "/" + model.QuotaSpec.Version,
+				APIVersion: model.QuotaSpec.Group() + "/" + model.QuotaSpec.Version(),
 			},
 		},
 		collection: &QuotaSpecList{},
@@ -146,7 +146,7 @@ var knownTypes = map[string]struct {
 		object: &QuotaSpecBinding{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "QuotaSpecBinding",
-				APIVersion: ResourceGroup(&model.QuotaSpecBinding) + "/" + model.QuotaSpecBinding.Version,
+				APIVersion: model.QuotaSpecBinding.Group() + "/" + model.QuotaSpecBinding.Version(),
 			},
 		},
 		collection: &QuotaSpecBindingList{},
@@ -156,7 +156,7 @@ var knownTypes = map[string]struct {
 		object: &EndUserAuthenticationPolicySpec{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "EndUserAuthenticationPolicySpec",
-				APIVersion: ResourceGroup(&model.EndUserAuthenticationPolicySpec) + "/" + model.EndUserAuthenticationPolicySpec.Version,
+				APIVersion: model.EndUserAuthenticationPolicySpec.Group() + "/" + model.EndUserAuthenticationPolicySpec.Version(),
 			},
 		},
 		collection: &EndUserAuthenticationPolicySpecList{},
@@ -166,7 +166,7 @@ var knownTypes = map[string]struct {
 		object: &EndUserAuthenticationPolicySpecBinding{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "EndUserAuthenticationPolicySpecBinding",
-				APIVersion: ResourceGroup(&model.EndUserAuthenticationPolicySpecBinding) + "/" + model.EndUserAuthenticationPolicySpecBinding.Version,
+				APIVersion: model.EndUserAuthenticationPolicySpecBinding.Group() + "/" + model.EndUserAuthenticationPolicySpecBinding.Version(),
 			},
 		},
 		collection: &EndUserAuthenticationPolicySpecBindingList{},

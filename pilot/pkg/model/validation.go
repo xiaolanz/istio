@@ -89,7 +89,7 @@ func ValidatePort(port int) error {
 }
 
 // Validate checks that each name conforms to the spec and has a ProtoMessage
-func (descriptor ConfigDescriptor) Validate() error {
+func (descriptor ConfigGroupVersion) Validate() error {
 	var errs error
 	descriptorTypes := make(map[string]bool)
 	messages := make(map[string]bool)
@@ -118,7 +118,7 @@ func (descriptor ConfigDescriptor) Validate() error {
 
 // ValidateConfig ensures that the config object is well-defined
 // TODO: also check name and namespace
-func (descriptor ConfigDescriptor) ValidateConfig(typ string, obj interface{}) error {
+func (descriptor ConfigGroupVersion) ValidateConfig(typ string, obj interface{}) error {
 	if obj == nil {
 		return fmt.Errorf("invalid nil configuration object")
 	}

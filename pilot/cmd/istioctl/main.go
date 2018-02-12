@@ -647,7 +647,7 @@ func printYamlOutput(configClient *crd.Client, configList []model.Config) {
 
 func newClient() (*crd.Client, error) {
 	// TODO: use model.IstioConfigTypes once model.IngressRule is deprecated
-	return crd.NewClient(kubeconfig, model.ConfigDescriptor{
+	return crd.NewClient(kubeconfig, model.ConfigGroupVersion{
 		model.RouteRule,
 		model.V1alpha2RouteRule,
 		model.Gateway,

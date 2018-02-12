@@ -68,22 +68,7 @@ const (
 )
 
 var (
-	// TODO: use model.IstioConfigTypes once model.IngressRule is deprecated
-	configDescriptor = model.ConfigDescriptor{
-		model.RouteRule,
-		model.V1alpha2RouteRule,
-		model.Gateway,
-		model.EgressRule,
-		model.ExternalService,
-		model.DestinationPolicy,
-		model.DestinationRule,
-		model.HTTPAPISpec,
-		model.HTTPAPISpecBinding,
-		model.QuotaSpec,
-		model.QuotaSpecBinding,
-		model.EndUserAuthenticationPolicySpec,
-		model.EndUserAuthenticationPolicySpecBinding,
-	}
+	configDescriptor = model.IstioConfigTypes[0]
 )
 
 // MeshArgs provide configuration options for the mesh. If ConfigFile is provided, an attempt will be made to

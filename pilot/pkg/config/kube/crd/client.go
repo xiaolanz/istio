@@ -62,7 +62,7 @@ type IstioObjectList interface {
 
 // Client is a basic REST client for CRDs implementing config store
 type Client struct {
-	descriptor model.ConfigDescriptor
+	configGroupVersion model.ConfigGroupVersion
 
 	// restconfig for REST type descriptors
 	restconfig *rest.Config
@@ -75,7 +75,7 @@ type Client struct {
 }
 
 // CreateRESTConfig for cluster API server, pass empty config file for in-cluster
-func CreateRESTConfig(kubeconfig string) (config *rest.Config, err error) {
+func CreateRESTConfig(kubeconfig string, configGroupVersion *model.ConfigGroupVersion) (config *rest.Config, err error) {
 	if kubeconfig == "" {
 		config, err = rest.InClusterConfig()
 	} else {
@@ -83,37 +83,34 @@ func CreateRESTConfig(kubeconfig string) (config *rest.Config, err error) {
 	}
 
 	if err != nil {
-		return
+		return nil, err
 	}
-
+	gv := groupVersion(configGroupVersion)
+	config.GroupVersion = &gv
 	config.APIPath = "/apis"
 	config.ContentType = runtime.ContentTypeJSON
 
 	types := runtime.NewScheme()
 	schemeBuilder := runtime.NewSchemeBuilder(
 		func(scheme *runtime.Scheme) error {
-			for c, kind := range knownTypes {
-				gvk := schema.GroupVersionKind{
-					Group:   ResourceGroup(&kind.schema),
-					Version: kind.schema.Version,
-					Kind:    c,
-				}
-				scheme.AddKnownTypeWithName(gvk, kind.object)
-				meta_v1.AddToGroupVersion(scheme, gvk.GroupVersion())
+			for _, s := range configGroupVersion.Schemas() {
+				kind := knownTypes[s.Type]
+				scheme.AddKnownTypes(gv, kind.object, kind.collection)
 			}
+			meta_v1.AddToGroupVersion(scheme, gv)
 			return nil
 		})
 	err = schemeBuilder.AddToScheme(types)
 	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(types)}
 
-	return
+	return nil, err
 }
 
 // NewClient creates a client to Kubernetes API using a kubeconfig file.
 // Use an empty value for `kubeconfig` to use the in-cluster config.
 // If the kubeconfig file is empty, defaults to in-cluster config as well.
-func NewClient(config string, descriptor model.ConfigDescriptor, domainSuffix string) (*Client, error) {
-	for _, typ := range descriptor {
+func NewClient(config string, cgv model.ConfigGroupVersion, domainSuffix string) (*Client, error) {
+	for _, typ := range cgv.Schemas() {
 		if _, exists := knownTypes[typ.Type]; !exists {
 			return nil, fmt.Errorf("missing known type for %q", typ.Type)
 		}
@@ -124,7 +121,7 @@ func NewClient(config string, descriptor model.ConfigDescriptor, domainSuffix st
 		return nil, err
 	}
 
-	restconfig, err := CreateRESTConfig(kubeconfig)
+	restconfig, err := CreateRESTConfig(kubeconfig, &cgv)
 	if err != nil {
 		return nil, err
 	}
@@ -135,13 +132,20 @@ func NewClient(config string, descriptor model.ConfigDescriptor, domainSuffix st
 	}
 
 	out := &Client{
-		descriptor:   descriptor,
-		restconfig:   restconfig,
-		dynamic:      dynamic,
-		domainSuffix: domainSuffix,
+		configGroupVersion: cgv,
+		restconfig:         restconfig,
+		dynamic:            dynamic,
+		domainSuffix:       domainSuffix,
 	}
 
 	return out, nil
+}
+
+func groupVersion(cgv *model.ConfigGroupVersion) schema.GroupVersion {
+	return schema.GroupVersion{
+		Group:   cgv.Group(),
+		Version: cgv.Version(),
+	}
 }
 
 // RegisterResources sends a request to create CRDs and waits for them to initialize
@@ -151,8 +155,8 @@ func (cl *Client) RegisterResources() error {
 		return err
 	}
 
-	for _, schema := range cl.descriptor {
-		group := ResourceGroup(&schema)
+	for _, schema := range cl.configGroupVersion.Schemas() {
+		group := cl.configGroupVersion.Group()
 		name := ResourceName(schema.Plural) + "." + group
 		crd := &apiextensionsv1beta1.CustomResourceDefinition{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -160,7 +164,7 @@ func (cl *Client) RegisterResources() error {
 			},
 			Spec: apiextensionsv1beta1.CustomResourceDefinitionSpec{
 				Group:   group,
-				Version: schema.Version,
+				Version: cl.configGroupVersion.Version(),
 				Scope:   apiextensionsv1beta1.NamespaceScoped,
 				Names: apiextensionsv1beta1.CustomResourceDefinitionNames{
 					Plural: ResourceName(schema.Plural),
@@ -178,8 +182,8 @@ func (cl *Client) RegisterResources() error {
 	// wait for CRD being established
 	errPoll := wait.Poll(500*time.Millisecond, 60*time.Second, func() (bool, error) {
 	descriptor:
-		for _, schema := range cl.descriptor {
-			name := ResourceName(schema.Plural) + "." + ResourceGroup(&schema)
+		for _, schema := range cl.configGroupVersion.Schemas() {
+			name := ResourceName(schema.Plural) + "." + schema.Group()
 			crd, errGet := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Get(name, meta_v1.GetOptions{})
 			if errGet != nil {
 				return false, errGet
@@ -222,22 +226,22 @@ func (cl *Client) DeregisterResources() error {
 	}
 
 	var errs error
-	for _, schema := range cl.descriptor {
-		name := ResourceName(schema.Plural) + "." + ResourceGroup(&schema)
+	for _, schema := range cl.configGroupVersion.Schemas() {
+		name := ResourceName(schema.Plural) + "." + schema.Group()
 		err := clientset.ApiextensionsV1beta1().CustomResourceDefinitions().Delete(name, nil)
 		errs = multierror.Append(errs, err)
 	}
 	return errs
 }
 
-// ConfigDescriptor for the store
-func (cl *Client) ConfigDescriptor() model.ConfigDescriptor {
-	return cl.descriptor
+// ConfigGroupVersion for the store
+func (cl *Client) ConfigDescriptor() model.ConfigGroupVersion {
+	return cl.configGroupVersion
 }
 
 // Get implements store interface
 func (cl *Client) Get(typ, name, namespace string) (*model.Config, bool) {
-	schema, exists := cl.descriptor.GetByType(typ)
+	schema, exists := cl.configGroupVersion.GetByType(typ)
 	if !exists {
 		return nil, false
 	}
@@ -264,7 +268,7 @@ func (cl *Client) Get(typ, name, namespace string) (*model.Config, bool) {
 
 // Create implements store interface
 func (cl *Client) Create(config model.Config) (string, error) {
-	schema, exists := cl.descriptor.GetByType(config.Type)
+	schema, exists := cl.configGroupVersion.GetByType(config.Type)
 	if !exists {
 		return "", fmt.Errorf("unrecognized type %q", config.Type)
 	}
@@ -293,7 +297,7 @@ func (cl *Client) Create(config model.Config) (string, error) {
 
 // Update implements store interface
 func (cl *Client) Update(config model.Config) (string, error) {
-	schema, exists := cl.descriptor.GetByType(config.Type)
+	schema, exists := cl.configGroupVersion.GetByType(config.Type)
 	if !exists {
 		return "", fmt.Errorf("unrecognized type %q", config.Type)
 	}
@@ -327,7 +331,7 @@ func (cl *Client) Update(config model.Config) (string, error) {
 
 // Delete implements store interface
 func (cl *Client) Delete(typ, name, namespace string) error {
-	schema, exists := cl.descriptor.GetByType(typ)
+	schema, exists := cl.configGroupVersion.GetByType(typ)
 	if !exists {
 		return fmt.Errorf("missing type %q", typ)
 	}
@@ -341,7 +345,7 @@ func (cl *Client) Delete(typ, name, namespace string) error {
 
 // List implements store interface
 func (cl *Client) List(typ, namespace string) ([]model.Config, error) {
-	schema, exists := cl.descriptor.GetByType(typ)
+	schema, exists := cl.configGroupVersion.GetByType(typ)
 	if !exists {
 		return nil, fmt.Errorf("missing type %q", typ)
 	}

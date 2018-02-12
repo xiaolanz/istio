@@ -39,7 +39,7 @@ type ConfigMeta struct {
 	// Group is the API group of the config.
 	Group string `json:"group,omitempty"`
 
-	// Version is the API version of the Config.
+	// Version is the API version of the config.
 	Version string `json:"version,omitempty"`
 
 	// Name is a unique immutable identifier in a namespace
@@ -114,10 +114,10 @@ type Config struct {
 // Object references supplied and returned from this interface should be
 // treated as read-only. Modifying them violates thread-safety.
 type ConfigStore interface {
-	// ConfigDescriptor exposes the configuration type schema known by the config store.
-	// The type schema defines the bidrectional mapping between configuration
-	// types and the protobuf encoding schema.
-	ConfigDescriptor() ConfigDescriptor
+	// ConfigGroupVersion exposes the configuration type protoSchemas known by the config store.
+	// The type protoSchemas defines the bidrectional mapping between configuration
+	// types and the protobuf encoding protoSchemas.
+	ConfigGroupVersion() ConfigGroupVersion
 
 	// Get retrieves a configuration element by a type and a key
 	Get(typ, name, namespace string) (config *Config, exists bool)
@@ -179,11 +179,18 @@ type ConfigStoreCache interface {
 	HasSynced() bool
 }
 
-// ConfigDescriptor defines the bijection between the short type name and its
-// fully qualified protobuf message name
-type ConfigDescriptor []ProtoSchema
+// ConfigGroupVersion defines a group of protobuf message with the same API group prefix and version.
+type ConfigGroupVersion struct {
+	// GroupPrefix refers to the API group prefix that matches the API package name in reverse order.
+	groupPrefix string
 
-// ProtoSchema provides description of the configuration schema and its key function
+	// Version refers to the API version.
+	version string
+
+	protoSchemas []ProtoSchema
+}
+
+// ProtoSchema provides description of the configuration protoSchemas and its key function
 type ProtoSchema struct {
 	// Type refers to the short configuration type name
 	Type string
@@ -191,32 +198,35 @@ type ProtoSchema struct {
 	// Plural refers to the short plural configuration name
 	Plural string
 
-	// GroupPrefix refers to the API group prefix that matches the API package name in reverse order.
-	GroupPrefix string
-
-	// Version refers to the API version.
-	Version string
-
 	// MessageName refers to the protobuf message type name corresponding to the type
 	MessageName string
 
 	// Validate configuration as a protobuf message assuming the object is an
 	// instance of the expected message type
 	Validate func(config proto.Message) error
+
+	// ConfigGroupVersion references to the config group version this proto schema belongs to.
+	ConfigGroupVersion *ConfigGroupVersion
 }
 
-// Types lists all known types in the config schema
-func (descriptor ConfigDescriptor) Types() []string {
-	types := make([]string, 0, len(descriptor))
-	for _, t := range descriptor {
-		types = append(types, t.Type)
-	}
-	return types
+// Group generates the API group for each schema.
+func (ps *ProtoSchema) Group() string {
+	return ps.ConfigGroupVersion.Group()
 }
 
-// GetByMessageName finds a schema by message name if it is available
-func (descriptor ConfigDescriptor) GetByMessageName(name string) (ProtoSchema, bool) {
-	for _, schema := range descriptor {
+// Version generates the k8s API group for each schema.
+func (ps *ProtoSchema) Version() string {
+	return ps.ConfigGroupVersion.Version()
+}
+
+// Schemas lists all proto schemas in the config API group version.
+func (cgv *ConfigGroupVersion) Schemas() []ProtoSchema {
+	return cgv.protoSchemas
+}
+
+// GetByMessageName finds a protoSchemas by message name if it is available
+func (cgv *ConfigGroupVersion) GetByMessageName(name string) (ProtoSchema, bool) {
+	for _, schema := range cgv.protoSchemas {
 		if schema.MessageName == name {
 			return schema, true
 		}
@@ -224,14 +234,25 @@ func (descriptor ConfigDescriptor) GetByMessageName(name string) (ProtoSchema, b
 	return ProtoSchema{}, false
 }
 
-// GetByType finds a schema by type if it is available
-func (descriptor ConfigDescriptor) GetByType(name string) (ProtoSchema, bool) {
-	for _, schema := range descriptor {
+// GetByType finds a protoSchemas by type if it is available
+func (cgv *ConfigGroupVersion) GetByType(name string) (ProtoSchema, bool) {
+	for _, schema := range cgv.protoSchemas {
 		if schema.Type == name {
 			return schema, true
 		}
 	}
 	return ProtoSchema{}, false
+}
+
+// Group gets the API group path which combines the group prefix for this config group
+// and the istio group suffix, such as config.isio.io.
+func (cgv *ConfigGroupVersion) Group() string {
+	return cgv.groupPrefix + istioAPIGroupSuffix
+}
+
+// Version gets the version, such as v1Alpha1
+func (cgv *ConfigGroupVersion) Version() string {
+	return cgv.version
 }
 
 // IstioConfigStore is a specialized interface to access config store using
@@ -281,8 +302,8 @@ type IstioConfigStore interface {
 const (
 	// IstioAPIGroupSuffix defines API group name for Istio configuration resources
 	// The group suffix combines with ProtoSchema's group prefix to generate the
-	// APIGroup.
-	IstioAPIGroupSuffix = ".istio.io"
+	// Group.
+	istioAPIGroupSuffix = ".istio.io"
 
 	// istioAPIVersion defines API group version
 	istioAPIVersion = "v1alpha2"
@@ -308,8 +329,6 @@ var (
 	MockConfig = ProtoSchema{
 		Type:        "mock-config",
 		Plural:      "mock-configs",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "test.MockConfig",
 		Validate: func(config proto.Message) error {
 			if config.(*test.MockConfig).Key == "" {
@@ -323,8 +342,6 @@ var (
 	RouteRule = ProtoSchema{
 		Type:        "route-rule",
 		Plural:      "route-rules",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.routing.v1alpha1.RouteRule",
 		Validate:    ValidateRouteRule,
 	}
@@ -333,8 +350,6 @@ var (
 	V1alpha2RouteRule = ProtoSchema{
 		Type:        "v1alpha2-route-rule",
 		Plural:      "v1alpha2-route-rules",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.routing.v1alpha2.RouteRule",
 		Validate:    ValidateRouteRuleV2,
 	}
@@ -343,8 +358,6 @@ var (
 	Gateway = ProtoSchema{
 		Type:        "gateway",
 		Plural:      "gateways",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.routing.v1alpha2.Gateway",
 		Validate:    ValidateGateway,
 	}
@@ -353,8 +366,6 @@ var (
 	IngressRule = ProtoSchema{
 		Type:        "ingress-rule",
 		Plural:      "ingress-rules",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.routing.v1alpha1.IngressRule",
 		Validate:    ValidateIngressRule,
 	}
@@ -363,8 +374,6 @@ var (
 	EgressRule = ProtoSchema{
 		Type:        "egress-rule",
 		Plural:      "egress-rules",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.routing.v1alpha1.EgressRule",
 		Validate:    ValidateEgressRule,
 	}
@@ -373,8 +382,6 @@ var (
 	ExternalService = ProtoSchema{
 		Type:        "external-service",
 		Plural:      "external-services",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.routing.v1alpha2.ExternalService",
 		Validate:    ValidateExternalService,
 	}
@@ -383,8 +390,6 @@ var (
 	DestinationPolicy = ProtoSchema{
 		Type:        "destination-policy",
 		Plural:      "destination-policies",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.routing.v1alpha1.DestinationPolicy",
 		Validate:    ValidateDestinationPolicy,
 	}
@@ -393,8 +398,6 @@ var (
 	DestinationRule = ProtoSchema{
 		Type:        "destination-rule",
 		Plural:      "destination-rules",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.routing.v1alpha2.DestinationRule",
 		Validate:    ValidateDestinationRule,
 	}
@@ -403,8 +406,6 @@ var (
 	HTTPAPISpec = ProtoSchema{
 		Type:        "http-api-spec",
 		Plural:      "http-api-specs",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.mixer.v1.config.client.HTTPAPISpec",
 		Validate:    ValidateHTTPAPISpec,
 	}
@@ -413,8 +414,6 @@ var (
 	HTTPAPISpecBinding = ProtoSchema{
 		Type:        "http-api-spec-binding",
 		Plural:      "http-api-spec-bindings",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.mixer.v1.config.client.HTTPAPISpecBinding",
 		Validate:    ValidateHTTPAPISpecBinding,
 	}
@@ -423,8 +422,6 @@ var (
 	QuotaSpec = ProtoSchema{
 		Type:        "quota-spec",
 		Plural:      "quota-specs",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.mixer.v1.config.client.QuotaSpec",
 		Validate:    ValidateQuotaSpec,
 	}
@@ -433,8 +430,6 @@ var (
 	QuotaSpecBinding = ProtoSchema{
 		Type:        "quota-spec-binding",
 		Plural:      "quota-spec-bindings",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.mixer.v1.config.client.QuotaSpecBinding",
 		Validate:    ValidateQuotaSpecBinding,
 	}
@@ -443,8 +438,6 @@ var (
 	EndUserAuthenticationPolicySpec = ProtoSchema{
 		Type:        "end-user-authentication-policy-spec",
 		Plural:      "end-user-authentication-policy-specs",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.mixer.v1.config.client.EndUserAuthenticationPolicySpec",
 		Validate:    ValidateEndUserAuthenticationPolicySpec,
 	}
@@ -453,28 +446,38 @@ var (
 	EndUserAuthenticationPolicySpecBinding = ProtoSchema{
 		Type:        "end-user-authentication-policy-spec-binding",
 		Plural:      "end-user-authentication-policy-spec-bindings",
-		GroupPrefix: "config",
-		Version:     istioAPIVersion,
 		MessageName: "istio.mixer.v1.config.client.EndUserAuthenticationPolicySpecBinding",
 		Validate:    ValidateEndUserAuthenticationPolicySpecBinding,
 	}
 
 	// IstioConfigTypes lists all Istio config types with schemas and validation
-	IstioConfigTypes = ConfigDescriptor{
-		RouteRule,
-		V1alpha2RouteRule,
-		IngressRule,
-		Gateway,
-		EgressRule,
-		ExternalService,
-		DestinationPolicy,
-		DestinationRule,
-		HTTPAPISpec,
-		HTTPAPISpecBinding,
-		QuotaSpec,
-		QuotaSpecBinding,
-		EndUserAuthenticationPolicySpec,
-		EndUserAuthenticationPolicySpecBinding,
+	IstioConfigTypes = []ConfigGroupVersion{
+		{
+			groupPrefix: "config",
+			version:     istioAPIVersion,
+			protoSchemas: []ProtoSchema{
+				RouteRule,
+				V1alpha2RouteRule,
+				Gateway,
+				EgressRule,
+				ExternalService,
+				DestinationPolicy,
+				DestinationRule,
+				HTTPAPISpec,
+				HTTPAPISpecBinding,
+				QuotaSpec,
+				QuotaSpecBinding,
+				EndUserAuthenticationPolicySpec,
+				EndUserAuthenticationPolicySpecBinding,
+			},
+		},
+		{
+			groupPrefix: "config",
+			version:     istioAPIVersion,
+			protoSchemas: []ProtoSchema{
+				IngressRule,
+			},
+		},
 	}
 )
 

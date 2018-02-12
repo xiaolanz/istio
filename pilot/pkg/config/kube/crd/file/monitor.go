@@ -83,7 +83,7 @@ type Monitor struct {
 
 // NewMonitor creates a new config store that monitors files under the given root directory for changes to config.
 // If no types are provided in the descriptor, all IstioConfigTypes will be allowed.
-func NewMonitor(delegateStore model.ConfigStore, rootDirectory string, descriptor model.ConfigDescriptor) *Monitor {
+func NewMonitor(delegateStore model.ConfigStore, rootDirectory string, descriptor model.ConfigGroupVersion) *Monitor {
 	monitor := &Monitor{
 		store:         delegateStore,
 		root:          rootDirectory,

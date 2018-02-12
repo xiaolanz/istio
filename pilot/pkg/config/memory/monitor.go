@@ -58,7 +58,7 @@ func NewMonitor(store model.ConfigStore) Monitor {
 func NewBufferedMonitor(store model.ConfigStore, bufferSize int) Monitor {
 	handlers := make(map[string][]Handler)
 
-	for _, typ := range store.ConfigDescriptor().Types() {
+	for _, typ := range store.ConfigGroupVersion().Types() {
 		handlers[typ] = make([]Handler, 0)
 	}
 

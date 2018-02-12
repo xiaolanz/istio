@@ -40,36 +40,36 @@ func TestConfigDescriptorValidate(t *testing.T) {
 
 	cases := []struct {
 		name       string
-		descriptor ConfigDescriptor
+		descriptor ConfigGroupVersion
 		wantErr    bool
 	}{{
-		name:       "Valid ConfigDescriptor (IstioConfig)",
+		name:       "Valid ConfigGroupVersion (IstioConfig)",
 		descriptor: IstioConfigTypes,
 		wantErr:    false,
 	}, {
-		name: "Invalid DNS11234Label in ConfigDescriptor",
-		descriptor: ConfigDescriptor{ProtoSchema{
+		name: "Invalid DNS11234Label in ConfigGroupVersion",
+		descriptor: ConfigGroupVersion{ProtoSchema{
 			Type:        badLabel,
 			MessageName: RouteRule.MessageName,
 		}},
 		wantErr: true,
 	}, {
 		name: "Bad MessageName in ProtoMessage",
-		descriptor: ConfigDescriptor{ProtoSchema{
+		descriptor: ConfigGroupVersion{ProtoSchema{
 			Type:        goodLabel,
 			MessageName: "nonexistent",
 		}},
 		wantErr: true,
 	}, {
 		name: "Missing key function",
-		descriptor: ConfigDescriptor{ProtoSchema{
+		descriptor: ConfigGroupVersion{ProtoSchema{
 			Type:        RouteRule.Type,
 			MessageName: RouteRule.MessageName,
 		}},
 		wantErr: true,
 	}, {
 		name:       "Duplicate type and message",
-		descriptor: ConfigDescriptor{RouteRule, RouteRule},
+		descriptor: ConfigGroupVersion{RouteRule, RouteRule},
 		wantErr:    true,
 	}}
 

@@ -57,7 +57,7 @@ cat << EOF
 		object: &${crd}{
 			TypeMeta: meta_v1.TypeMeta{
 				Kind:       "${crd}",
-				APIVersion: ResourceGroup(&model.$crd) + "/" + model.$crd.Version,
+				APIVersion: model.${crd}.Group() + "/" + model.${crd}.Version(),
 			},
 		},
 		collection: &${crd}List{},

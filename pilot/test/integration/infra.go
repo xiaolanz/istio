@@ -503,7 +503,7 @@ func (infra *infra) deleteConfig(inFile string, data map[string]string) error {
 }
 
 func (infra *infra) deleteAllConfigs() error {
-	for _, desc := range infra.config.ConfigDescriptor() {
+	for _, desc := range infra.config.ConfigGroupVersion() {
 		configs, err := infra.config.List(desc.Type, infra.Namespace)
 		if err != nil {
 			return err

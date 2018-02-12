@@ -58,7 +58,7 @@ func NewController(client *Client, options kube.ControllerOptions) model.ConfigS
 	}
 
 	// add stores for CRD kinds
-	for _, schema := range client.ConfigDescriptor() {
+	for _, schema := range client.configGroupVersion.Schemas() {
 		out.addInformer(schema, options.WatchedNamespace, options.ResyncPeriod)
 	}
 
@@ -172,7 +172,7 @@ func (c *controller) Run(stop <-chan struct{}) {
 	log.Info("controller terminated")
 }
 
-func (c *controller) ConfigDescriptor() model.ConfigDescriptor {
+func (c *controller) ConfigDescriptor() model.ConfigGroupVersion {
 	return c.client.ConfigDescriptor()
 }
 

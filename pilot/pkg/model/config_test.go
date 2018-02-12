@@ -32,7 +32,7 @@ import (
 
 func TestConfigDescriptor(t *testing.T) {
 	a := model.ProtoSchema{Type: "a", MessageName: "proxy.A"}
-	descriptor := model.ConfigDescriptor{
+	descriptor := model.ConfigGroupVersion{
 		a,
 		model.ProtoSchema{Type: "b", MessageName: "proxy.B"},
 		model.ProtoSchema{Type: "c", MessageName: "proxy.C"},
@@ -367,7 +367,7 @@ func TestSortRouteRules(t *testing.T) {
 
 type errorStore struct{}
 
-func (errorStore) ConfigDescriptor() model.ConfigDescriptor {
+func (errorStore) ConfigDescriptor() model.ConfigGroupVersion {
 	return model.IstioConfigTypes
 }
 

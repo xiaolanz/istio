@@ -54,7 +54,7 @@ const (
 type ControllerOptions struct {
 	// Descriptor defines the list of supported configuration model
 	// types for Pilot.
-	Descriptor model.ConfigDescriptor
+	Descriptor model.ConfigGroupVersion
 
 	// ExternalAdmissionWebhookName is the name of the
 	// ExternalAdmissionHook which describes he external admission
@@ -260,7 +260,7 @@ func (ac *AdmissionController) register(client clientadmissionregistrationv1beta
 					admissionregistrationv1beta1.Update,
 				},
 				Rule: admissionregistrationv1beta1.Rule{
-					APIGroups:   []string{crd.ResourceGroup(&schema)},
+					APIGroups:   []string{crd.ResourceAPIGroup(&schema)},
 					APIVersions: []string{schema.Version},
 					Resources:   []string{crd.ResourceName(schema.Plural)},
 				},

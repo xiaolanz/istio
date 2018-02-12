@@ -59,8 +59,8 @@ func (c *controller) Run(stop <-chan struct{}) {
 	c.monitor.Run(stop)
 }
 
-func (c *controller) ConfigDescriptor() model.ConfigDescriptor {
-	return c.configStore.ConfigDescriptor()
+func (c *controller) ConfigDescriptor() model.ConfigGroupVersion {
+	return c.configStore.ConfigGroupVersion()
 }
 
 func (c *controller) Get(typ, key, namespace string) (*model.Config, bool) {

@@ -40,8 +40,8 @@ func ConvertObject(schema model.ProtoSchema, object IstioObject, domain string) 
 	return &model.Config{
 		ConfigMeta: model.ConfigMeta{
 			Type:            schema.Type,
-			Group:           ResourceGroup(&schema),
-			Version:         schema.Version,
+			Group:           schema.Group(),
+			Version:         schema.Version(),
 			Name:            meta.Name,
 			Namespace:       meta.Namespace,
 			Domain:          domain,
@@ -80,11 +80,6 @@ func ConvertConfig(schema model.ProtoSchema, config model.Config) (IstioObject, 
 // This is needed by k8s API server as dashes prevent kubectl from accessing CRDs
 func ResourceName(s string) string {
 	return strings.Replace(s, "-", "", -1)
-}
-
-// ResourceGroup generates the k8s API group for each schema.
-func ResourceGroup(schema *model.ProtoSchema) string {
-	return schema.GroupPrefix + model.IstioAPIGroupSuffix
 }
 
 // TODO - add special cases for type-to-kind and kind-to-type
@@ -161,7 +156,15 @@ func ParseInputs(inputs string) ([]model.Config, []IstioKind, error) {
 			continue
 		}
 
-		schema, exists := model.IstioConfigTypes.GetByType(CamelCaseToKabobCase(obj.Kind))
+		exists := false
+		var schema model.ProtoSchema
+		for _, group := range model.IstioConfigTypes {
+			schema, exists = group.GetByType(CamelCaseToKabobCase(obj.Kind))
+			if exists {
+				break
+			}
+		}
+
 		if !exists {
 			log.Debugf("unrecognized type %v", obj.Kind)
 			others = append(others, obj)
