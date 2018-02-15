@@ -255,6 +255,15 @@ func (cgv *ConfigGroupVersion) Version() string {
 	return cgv.version
 }
 
+// Types lists all known types in the config schema
+func (cgv *ConfigGroupVersion) Types() []string {
+	types := make([]string, 0)
+	for _, t := range cgv.protoSchemas {
+		types = append(types, t.Type)
+	}
+	return types
+}
+
 // IstioConfigStore is a specialized interface to access config store using
 // Istio configuration types
 type IstioConfigStore interface {

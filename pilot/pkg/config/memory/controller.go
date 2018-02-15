@@ -59,7 +59,7 @@ func (c *controller) Run(stop <-chan struct{}) {
 	c.monitor.Run(stop)
 }
 
-func (c *controller) ConfigDescriptor() model.ConfigGroupVersion {
+func (c *controller) ConfigGroupVersions() []model.ConfigGroupVersion {
 	return c.configStore.ConfigGroupVersions()
 }
 

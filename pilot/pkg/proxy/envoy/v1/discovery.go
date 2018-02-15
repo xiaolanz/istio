@@ -340,8 +340,10 @@ func NewDiscoveryService(ctl model.Controller, configCache model.ConfigStoreCach
 		// TODO: changes should not trigger a full recompute of LDS/RDS/CDS/EDS
 		// (especially mixerclient HTTP and quota)
 		configHandler := func(model.Config, model.Event) { out.clearCache() }
-		for _, descriptor := range model.IstioConfigTypes {
-			configCache.RegisterEventHandler(descriptor.Type, configHandler)
+		for _, group := range model.IstioConfigTypes {
+			for _, typ := range group.Types() {
+				configCache.RegisterEventHandler(typ, configHandler)
+			}
 		}
 	}
 

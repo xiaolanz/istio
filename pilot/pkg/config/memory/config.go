@@ -27,25 +27,27 @@ var (
 	errAlreadyExists = errors.New("item already exists")
 )
 
-// Make creates an in-memory config store from a config descriptor
-func Make(descriptor model.ConfigGroupVersion) model.ConfigStore {
+// Make creates an in-memory config store from a config configGroupVersion
+func Make(descriptor []model.ConfigGroupVersion) model.ConfigStore {
 	out := store{
-		descriptor: descriptor,
-		data:       make(map[string]map[string]map[string]model.Config),
+		configGroupVersions: descriptor,
+		data:                make(map[string]map[string]map[string]model.Config),
 	}
-	for _, typ := range descriptor.Types() {
-		out.data[typ] = make(map[string]map[string]model.Config)
+	for _, group := range descriptor {
+		for _, typ := range group.Types() {
+			out.data[typ] = make(map[string]map[string]model.Config)
+		}
 	}
 	return &out
 }
 
 type store struct {
-	descriptor model.ConfigGroupVersion
-	data       map[string]map[string]map[string]model.Config
+	configGroupVersions []model.ConfigGroupVersion
+	data                map[string]map[string]map[string]model.Config
 }
 
-func (cr *store) ConfigDescriptor() model.ConfigGroupVersion {
-	return cr.descriptor
+func (cr *store) ConfigGroupVersions() []model.ConfigGroupVersion {
+	return cr.configGroupVersions
 }
 
 func (cr *store) Get(typ, name, namespace string) (*model.Config, bool) {
@@ -108,9 +110,13 @@ func (cr *store) Delete(typ, name, namespace string) error {
 
 func (cr *store) Create(config model.Config) (string, error) {
 	typ := config.Type
-	schema, ok := cr.descriptor.GetByType(typ)
-	if !ok {
-		return "", errors.New("unknown type")
+	var schema model.ProtoSchema
+	var ok bool
+	for _, group := range cr.configGroupVersions {
+		schema, ok = group.GetByType(typ)
+		if !ok {
+			return "", errors.New("unknown type")
+		}
 	}
 	if err := schema.Validate(config.Spec); err != nil {
 		return "", err
@@ -133,10 +139,18 @@ func (cr *store) Create(config model.Config) (string, error) {
 
 func (cr *store) Update(config model.Config) (string, error) {
 	typ := config.Type
-	schema, ok := cr.descriptor.GetByType(typ)
+	var schema model.ProtoSchema
+	ok := false
+	for _, group := range cr.configGroupVersions {
+		schema, ok = group.GetByType(typ)
+		if ok {
+			break
+		}
+	}
 	if !ok {
 		return "", errors.New("unknown type")
 	}
+
 	if err := schema.Validate(config.Spec); err != nil {
 		return "", err
 	}
