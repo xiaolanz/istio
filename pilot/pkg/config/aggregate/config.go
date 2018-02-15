@@ -29,20 +29,24 @@ import (
 // Make creates an aggregate config store from several config stores and
 // unifies their descriptors
 func Make(stores []model.ConfigStore) (model.ConfigStore, error) {
-	union := model.ConfigGroupVersion{}
+	union := make([]model.ConfigGroupVersion, 0)
 	storeTypes := make(map[string]model.ConfigStore)
 	for _, store := range stores {
-		for _, descriptor := range store.ConfigGroupVersion() {
-			union = append(union, descriptor)
-			storeTypes[descriptor.Type] = store
+		for _, cgv := range store.ConfigGroupVersions() {
+			union = append(union, cgv)
+			for _, schema := range cgv.Schemas() {
+				storeTypes[schema.Type] = store
+			}
 		}
 	}
-	if err := union.Validate(); err != nil {
-		return nil, err
+	for _, cgv := range union {
+		if err := cgv.Validate(); err != nil {
+			return nil, err
+		}
 	}
 	return &store{
-		descriptor: union,
-		stores:     storeTypes,
+		configGroupVersions: union,
+		stores:              storeTypes,
 	}, nil
 }
 
@@ -65,14 +69,14 @@ func MakeCache(caches []model.ConfigStoreCache) (model.ConfigStoreCache, error) 
 
 type store struct {
 	// descriptor is the unified
-	descriptor model.ConfigGroupVersion
+	configGroupVersions []model.ConfigGroupVersion
 
 	// stores is a mapping from config type to a store
 	stores map[string]model.ConfigStore
 }
 
-func (cr *store) ConfigDescriptor() model.ConfigGroupVersion {
-	return cr.descriptor
+func (cr *store) ConfigGroupVersions() []model.ConfigGroupVersion {
+	return cr.ConfigGroupVersions()
 }
 
 func (cr *store) Get(typ, name, namespace string) (*model.Config, bool) {
@@ -120,8 +124,8 @@ type storeCache struct {
 	caches []model.ConfigStoreCache
 }
 
-func (cr *storeCache) ConfigDescriptor() model.ConfigGroupVersion {
-	return cr.store.ConfigGroupVersion()
+func (cr *storeCache) ConfigGroupVersions() []model.ConfigGroupVersion {
+	return cr.store.ConfigGroupVersions()
 }
 
 func (cr *storeCache) Get(typ, name, namespace string) (config *model.Config, exists bool) {
@@ -155,7 +159,7 @@ func (cr *storeCache) HasSynced() bool {
 
 func (cr *storeCache) RegisterEventHandler(typ string, handler func(model.Config, model.Event)) {
 	for _, cache := range cr.caches {
-		if _, exists := cache.ConfigGroupVersion().GetByType(typ); exists {
+		if _, exists := cache.ConfigGroupVersions().GetByType(typ); exists {
 			cache.RegisterEventHandler(typ, handler)
 			return
 		}

@@ -94,7 +94,7 @@ func (descriptor ConfigGroupVersion) Validate() error {
 	descriptorTypes := make(map[string]bool)
 	messages := make(map[string]bool)
 
-	for _, v := range descriptor {
+	for _, v := range descriptor.Schemas() {
 		if !IsDNS1123Label(v.Type) {
 			errs = multierror.Append(errs, fmt.Errorf("invalid type: %q", v.Type))
 		}

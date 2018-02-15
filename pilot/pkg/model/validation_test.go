@@ -43,11 +43,11 @@ func TestConfigDescriptorValidate(t *testing.T) {
 		descriptor ConfigGroupVersion
 		wantErr    bool
 	}{{
-		name:       "Valid ConfigGroupVersion (IstioConfig)",
+		name:       "Valid ConfigGroupVersions (IstioConfig)",
 		descriptor: IstioConfigTypes,
 		wantErr:    false,
 	}, {
-		name: "Invalid DNS11234Label in ConfigGroupVersion",
+		name: "Invalid DNS11234Label in ConfigGroupVersions",
 		descriptor: ConfigGroupVersion{ProtoSchema{
 			Type:        badLabel,
 			MessageName: RouteRule.MessageName,

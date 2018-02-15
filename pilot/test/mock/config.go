@@ -179,7 +179,7 @@ func Compare(a, b model.Config) bool {
 // CheckMapInvariant validates operational invariants of an empty config registry
 func CheckMapInvariant(r model.ConfigStore, t *testing.T, namespace string, n int) {
 	// check that the config descriptor is the mock config descriptor
-	_, contains := r.ConfigGroupVersion().GetByType(model.MockConfig.Type)
+	_, contains := r.ConfigGroupVersions().GetByType(model.MockConfig.Type)
 	if !contains {
 		t.Error("expected config mock types")
 	}

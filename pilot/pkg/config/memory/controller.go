@@ -60,7 +60,7 @@ func (c *controller) Run(stop <-chan struct{}) {
 }
 
 func (c *controller) ConfigDescriptor() model.ConfigGroupVersion {
-	return c.configStore.ConfigGroupVersion()
+	return c.configStore.ConfigGroupVersions()
 }
 
 func (c *controller) Get(typ, key, namespace string) (*model.Config, bool) {

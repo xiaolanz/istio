@@ -114,10 +114,10 @@ type Config struct {
 // Object references supplied and returned from this interface should be
 // treated as read-only. Modifying them violates thread-safety.
 type ConfigStore interface {
-	// ConfigGroupVersion exposes the configuration type protoSchemas known by the config store.
+	// ConfigGroupVersions exposes the configuration type protoSchemas known by the config store.
 	// The type protoSchemas defines the bidrectional mapping between configuration
 	// types and the protobuf encoding protoSchemas.
-	ConfigGroupVersion() ConfigGroupVersion
+	ConfigGroupVersions() []ConfigGroupVersion
 
 	// Get retrieves a configuration element by a type and a key
 	Get(typ, name, namespace string) (config *Config, exists bool)
@@ -179,7 +179,7 @@ type ConfigStoreCache interface {
 	HasSynced() bool
 }
 
-// ConfigGroupVersion defines a group of protobuf message with the same API group prefix and version.
+// ConfigGroupVersions defines a group of protobuf message with the same API group prefix and version.
 type ConfigGroupVersion struct {
 	// GroupPrefix refers to the API group prefix that matches the API package name in reverse order.
 	groupPrefix string
@@ -205,7 +205,7 @@ type ProtoSchema struct {
 	// instance of the expected message type
 	Validate func(config proto.Message) error
 
-	// ConfigGroupVersion references to the config group version this proto schema belongs to.
+	// ConfigGroupVersions references to the config group version this proto schema belongs to.
 	ConfigGroupVersion *ConfigGroupVersion
 }
 
