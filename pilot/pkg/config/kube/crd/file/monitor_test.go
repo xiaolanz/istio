@@ -65,13 +65,15 @@ func (cm *controllerManager) setup(events chan event, stop chan struct{}) {
 	cm.controller = memory.NewBufferedController(store, 100)
 
 	// Register changes to the repository
-	for _, s := range model.IstioConfigTypes.Types() {
-		cm.controller.RegisterEventHandler(s, func(config model.Config, ev model.Event) {
-			events <- event{
-				config: config,
-				event:  ev,
-			}
-		})
+	for _, g := range model.IstioConfigTypes {
+		for _, s := range g.Types() {
+			cm.controller.RegisterEventHandler(s, func(config model.Config, ev model.Event) {
+				events <- event{
+					config: config,
+					event:  ev,
+				}
+			})
+		}
 	}
 
 	// Run the controller.

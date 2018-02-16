@@ -503,15 +503,17 @@ func (infra *infra) deleteConfig(inFile string, data map[string]string) error {
 }
 
 func (infra *infra) deleteAllConfigs() error {
-	for _, desc := range infra.config.ConfigGroupVersions() {
-		configs, err := infra.config.List(desc.Type, infra.Namespace)
-		if err != nil {
-			return err
-		}
-		for _, config := range configs {
-			log.Infof("Delete config %s", config.Key())
-			if err = infra.config.Delete(desc.Type, config.Name, config.Namespace); err != nil {
+	for _, group := range infra.config.ConfigGroupVersions() {
+		for _, desc := range group.Schemas() {
+			configs, err := infra.config.List(desc.Type, infra.Namespace)
+			if err != nil {
 				return err
+			}
+			for _, config := range configs {
+				log.Infof("Delete config %s", config.Key())
+				if err = infra.config.Delete(desc.Type, config.Name, config.Namespace); err != nil {
+					return err
+				}
 			}
 		}
 	}

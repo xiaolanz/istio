@@ -38,7 +38,8 @@ import (
 
 var (
 	// Types defines the mock config descriptor
-	Types = model.NewConfigGroupVersion("mockconfig", "v1alpha1", []model.ProtoSchema{model.MockConfig})
+	mockGroup = model.NewConfigGroupVersion("mockconfig", "v1alpha1", []model.ProtoSchema{model.MockConfig})
+	Types     = []*model.ConfigGroupVersion{&mockGroup}
 
 	// ExampleRouteRule is an example route rule
 	ExampleRouteRule = &routing.RouteRule{

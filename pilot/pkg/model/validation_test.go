@@ -32,6 +32,7 @@ import (
 	routing "istio.io/api/routing/v1alpha1"
 	routingv2 "istio.io/api/routing/v1alpha2"
 	"istio.io/istio/pilot/pkg/model/test"
+	"istio.io/istio/pilot/test/mock"
 )
 
 func TestConfigGroupVersionValidate(t *testing.T) {
@@ -135,11 +136,13 @@ func TestConfigDescriptorValidateConfig(t *testing.T) {
 		},
 	}
 
-	types := append(IstioConfigTypes, MockConfig)
+	types := append(IstioConfigTypes, mock.Types...)
 
-	for _, c := range cases {
-		if err := types.ValidateConfig(c.typ, c.config); (err != nil) != c.wantErr {
-			t.Errorf("%v failed: got error=%v but wantErr=%v", c.name, err, c.wantErr)
+	for _, group := range types {
+		for _, c := range cases {
+			if err := group.ValidateConfig(c.typ, c.config); (err != nil) != c.wantErr {
+				t.Errorf("%v failed: got error=%v but wantErr=%v", c.name, err, c.wantErr)
+			}
 		}
 	}
 }

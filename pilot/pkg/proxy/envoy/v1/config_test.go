@@ -490,31 +490,35 @@ var (
 )
 
 func addConfig(r model.ConfigStore, config fileConfig, t *testing.T) {
-	schema, ok := model.IstioConfigTypes.GetByType(config.meta.Type)
-	if !ok {
-		t.Fatalf("missing schema for %q", config.meta.Type)
-	}
-	content, err := ioutil.ReadFile(config.file)
-	if err != nil {
-		t.Fatalf("reading %s: %s", config.file, err)
-	}
-	spec, err := schema.FromYAML(string(content))
-	if err != nil {
-		t.Fatalf("parsing yaml for %s: %s", config.file, err)
-	}
-	out := model.Config{
-		ConfigMeta: config.meta,
-		Spec:       spec,
-	}
+	for _, group := range model.IstioConfigTypes {
+		schema, ok := group.GetByType(config.meta.Type)
+		if !ok {
+			continue
+		}
+		content, err := ioutil.ReadFile(config.file)
+		if err != nil {
+			t.Fatalf("reading %s: %s", config.file, err)
+		}
+		spec, err := schema.FromYAML(string(content))
+		if err != nil {
+			t.Fatalf("parsing yaml for %s: %s", config.file, err)
+		}
+		out := model.Config{
+			ConfigMeta: config.meta,
+			Spec:       spec,
+		}
 
-	// set default values for overriding
-	out.ConfigMeta.Namespace = "default"
-	out.ConfigMeta.Domain = "cluster.local"
+		// set default values for overriding
+		out.ConfigMeta.Namespace = "default"
+		out.ConfigMeta.Domain = "cluster.local"
 
-	_, err = r.Create(out)
-	if err != nil {
-		t.Fatalf("create for %s: %s", config.file, err)
+		_, err = r.Create(out)
+		if err != nil {
+			t.Fatalf("create for %s: %s", config.file, err)
+		}
+		return
 	}
+	t.Fatalf("missing schema for %q", config.meta.Type)
 }
 
 func makeProxyConfig() meshconfig.ProxyConfig {
