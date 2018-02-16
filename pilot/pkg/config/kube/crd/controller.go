@@ -58,18 +58,25 @@ func NewController(client *Client, options kube.ControllerOptions) model.ConfigS
 	}
 
 	// add stores for CRD kinds
-	for _, schema := range client.configGroupVersion.Schemas() {
-		out.addInformer(schema, options.WatchedNamespace, options.ResyncPeriod)
+	for _, group := range client.configGroupVersions {
+		for _, schema := range group.Schemas() {
+			out.addInformer(schema, options.WatchedNamespace, options.ResyncPeriod)
+		}
 	}
 
 	return out
 }
 
 func (c *controller) addInformer(schema model.ProtoSchema, namespace string, resyncPeriod time.Duration) {
+	av := apiVersion(schema.ConfigGroupVersion)
+	cc, ok := c.client.clientset[av]
+	if !ok {
+		return
+	}
 	c.kinds[schema.Type] = c.createInformer(knownTypes[schema.Type].object.DeepCopyObject(), resyncPeriod,
 		func(opts meta_v1.ListOptions) (result runtime.Object, err error) {
 			result = knownTypes[schema.Type].collection.DeepCopyObject()
-			err = c.client.dynamic.Get().
+			err = cc.dynamic.Get().
 				Namespace(namespace).
 				Resource(ResourceName(schema.Plural)).
 				VersionedParams(&opts, meta_v1.ParameterCodec).
@@ -78,7 +85,7 @@ func (c *controller) addInformer(schema model.ProtoSchema, namespace string, res
 			return
 		},
 		func(opts meta_v1.ListOptions) (watch.Interface, error) {
-			return c.client.dynamic.Get().
+			return cc.dynamic.Get().
 				Prefix("watch").
 				Namespace(namespace).
 				Resource(ResourceName(schema.Plural)).
@@ -133,22 +140,24 @@ func (c *controller) createInformer(
 }
 
 func (c *controller) RegisterEventHandler(typ string, f func(model.Config, model.Event)) {
-	schema, exists := c.ConfigDescriptor().GetByType(typ)
-	if !exists {
-		return
-	}
-	c.kinds[typ].handler.Append(func(object interface{}, ev model.Event) error {
-		item, ok := object.(IstioObject)
-		if ok {
-			config, err := ConvertObject(schema, item, c.client.domainSuffix)
-			if err != nil {
-				log.Warnf("error translating object %#v", object)
-			} else {
-				f(*config, ev)
-			}
+	for _, group := range c.client.configGroupVersions {
+		schema, exists := group.GetByType(typ)
+		if !exists {
+			continue
 		}
-		return nil
-	})
+		c.kinds[typ].handler.Append(func(object interface{}, ev model.Event) error {
+			item, ok := object.(IstioObject)
+			if ok {
+				config, err := ConvertObject(schema, item, c.client.domainSuffix)
+				if err != nil {
+					log.Warnf("error translating object %#v", object)
+				} else {
+					f(*config, ev)
+				}
+			}
+			return nil
+		})
+	}
 }
 
 func (c *controller) HasSynced() bool {
@@ -172,38 +181,45 @@ func (c *controller) Run(stop <-chan struct{}) {
 	log.Info("controller terminated")
 }
 
-func (c *controller) ConfigDescriptor() model.ConfigGroupVersion {
-	return c.client.ConfigDescriptor()
+func (c *controller) ConfigGroupVersions() []model.ConfigGroupVersion {
+	list := make([]model.ConfigGroupVersion, 0)
+	for _, group := range c.client.ConfigGroupVersions() {
+		list = append(list, *group)
+	}
+	return list
 }
 
 func (c *controller) Get(typ, name, namespace string) (*model.Config, bool) {
-	schema, exists := c.client.ConfigDescriptor().GetByType(typ)
-	if !exists {
-		return nil, false
-	}
+	for _, group := range c.client.configGroupVersions {
+		schema, exists := group.GetByType(typ)
+		if !exists {
+			continue
+		}
 
-	store := c.kinds[typ].informer.GetStore()
-	data, exists, err := store.GetByKey(kube.KeyFunc(name, namespace))
-	if !exists {
-		return nil, false
-	}
-	if err != nil {
-		log.Warna(err)
-		return nil, false
-	}
+		store := c.kinds[typ].informer.GetStore()
+		data, exists, err := store.GetByKey(kube.KeyFunc(name, namespace))
+		if !exists {
+			return nil, false
+		}
+		if err != nil {
+			log.Warna(err)
+			return nil, false
+		}
 
-	obj, ok := data.(IstioObject)
-	if !ok {
-		log.Warn("Cannot convert to config from store")
-		return nil, false
-	}
+		obj, ok := data.(IstioObject)
+		if !ok {
+			log.Warn("Cannot convert to config from store")
+			return nil, false
+		}
 
-	config, err := ConvertObject(schema, obj, c.client.domainSuffix)
-	if err != nil {
-		return nil, false
-	}
+		config, err := ConvertObject(schema, obj, c.client.domainSuffix)
+		if err != nil {
+			return nil, false
+		}
 
-	return config, true
+		return config, true
+	}
+	return nil, false
 }
 
 func (c *controller) Create(config model.Config) (string, error) {
@@ -219,29 +235,32 @@ func (c *controller) Delete(typ, name, namespace string) error {
 }
 
 func (c *controller) List(typ, namespace string) ([]model.Config, error) {
-	schema, ok := c.client.ConfigDescriptor().GetByType(typ)
-	if !ok {
-		return nil, fmt.Errorf("missing type %q", typ)
-	}
-
-	var errs error
-	out := make([]model.Config, 0)
-	for _, data := range c.kinds[typ].informer.GetStore().List() {
-		item, ok := data.(IstioObject)
+	for _, group := range c.client.configGroupVersions {
+		schema, ok := group.GetByType(typ)
 		if !ok {
 			continue
 		}
 
-		if namespace != "" && namespace != item.GetObjectMeta().Namespace {
-			continue
-		}
+		var errs error
+		out := make([]model.Config, 0)
+		for _, data := range c.kinds[typ].informer.GetStore().List() {
+			item, ok := data.(IstioObject)
+			if !ok {
+				continue
+			}
 
-		config, err := ConvertObject(schema, item, c.client.domainSuffix)
-		if err != nil {
-			errs = multierror.Append(errs, err)
-		} else {
-			out = append(out, *config)
+			if namespace != "" && namespace != item.GetObjectMeta().Namespace {
+				continue
+			}
+
+			config, err := ConvertObject(schema, item, c.client.domainSuffix)
+			if err != nil {
+				errs = multierror.Append(errs, err)
+			} else {
+				out = append(out, *config)
+			}
 		}
+		return out, errs
 	}
-	return out, errs
+	return nil, fmt.Errorf("missing type %q", typ)
 }
