@@ -28,7 +28,7 @@ var (
 )
 
 // Make creates an in-memory config store from a config configGroupVersion
-func Make(descriptor []model.ConfigGroupVersion) model.ConfigStore {
+func Make(descriptor []*model.ConfigGroupVersion) model.ConfigStore {
 	out := store{
 		configGroupVersions: descriptor,
 		data:                make(map[string]map[string]map[string]model.Config),
@@ -42,11 +42,11 @@ func Make(descriptor []model.ConfigGroupVersion) model.ConfigStore {
 }
 
 type store struct {
-	configGroupVersions []model.ConfigGroupVersion
+	configGroupVersions []*model.ConfigGroupVersion
 	data                map[string]map[string]map[string]model.Config
 }
 
-func (cr *store) ConfigGroupVersions() []model.ConfigGroupVersion {
+func (cr *store) ConfigGroupVersions() []*model.ConfigGroupVersion {
 	return cr.configGroupVersions
 }
 

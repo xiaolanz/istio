@@ -93,7 +93,9 @@ func NewMonitor(delegateStore model.ConfigStore, rootDirectory string, descripto
 
 	types := descriptor.Types()
 	if len(types) == 0 {
-		types = model.IstioConfigTypes.Types()
+		for _, group := range model.IstioConfigTypes {
+			types = append(types, group.Types())
+		}
 	}
 
 	for _, k := range types {

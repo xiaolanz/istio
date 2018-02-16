@@ -117,7 +117,7 @@ type ConfigStore interface {
 	// ConfigGroupVersions exposes the configuration type protoSchemas known by the config store.
 	// The type protoSchemas defines the bidrectional mapping between configuration
 	// types and the protobuf encoding protoSchemas.
-	ConfigGroupVersions() []ConfigGroupVersion
+	ConfigGroupVersions() []*ConfigGroupVersion
 
 	// Get retrieves a configuration element by a type and a key
 	Get(typ, name, namespace string) (config *Config, exists bool)
@@ -460,7 +460,7 @@ var (
 	}
 
 	// IstioConfigTypes lists all Istio config types with schemas and validation
-	IstioConfigTypes = []ConfigGroupVersion{
+	IstioConfigTypes = []*ConfigGroupVersion{
 		{
 			groupPrefix: "config",
 			version:     istioAPIVersion,

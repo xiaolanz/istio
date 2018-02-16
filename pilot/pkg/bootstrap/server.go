@@ -68,7 +68,7 @@ const (
 )
 
 var (
-	configDescriptor = model.IstioConfigTypes[0]
+	configGroupVersions = model.IstioConfigTypes[0:0]
 )
 
 // MeshArgs provide configuration options for the mesh. If ConfigFile is provided, an attempt will be made to
@@ -353,9 +353,9 @@ func (c *mockController) Run(<-chan struct{}) {}
 func (s *Server) initConfigController(args *PilotArgs) error {
 	var configController model.ConfigStoreCache
 	if args.Config.FileDir != "" {
-		store := memory.Make(configDescriptor)
+		store := memory.Make(configGroupVersions)
 		configController = memory.NewController(store)
-		fileMonitor := file.NewMonitor(configController, args.Config.FileDir, configDescriptor)
+		fileMonitor := file.NewMonitor(configController, args.Config.FileDir, configGroupVersions)
 
 		// Defer starting the file monitor until after the service is created.
 		s.addStartFunc(func(stop chan struct{}) error {
@@ -364,7 +364,7 @@ func (s *Server) initConfigController(args *PilotArgs) error {
 		})
 	} else {
 		kubeCfgFile := s.getKubeCfgFile(args)
-		configClient, err := crd.NewClient(kubeCfgFile, configDescriptor,
+		configClient, err := crd.NewClient(kubeCfgFile, configGroupVersions,
 			args.Config.ControllerOptions.DomainSuffix)
 		if err != nil {
 			return multierror.Prefix(err, "failed to open a config client.")
@@ -601,7 +601,7 @@ func (s *Server) initAdmissionController(args *PilotArgs) error {
 		SecretName:                   args.Admission.SecretName,
 		Port:                         args.Admission.Port,
 		RegistrationDelay:            args.Admission.RegistrationDelay,
-		Descriptor:                   configDescriptor,
+		Descriptor:                   configGroupVersions,
 		ServiceNamespace:             args.Namespace,
 		DomainSuffix:                 args.Config.ControllerOptions.DomainSuffix,
 		ValidateNamespaces: []string{

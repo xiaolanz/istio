@@ -181,12 +181,8 @@ func (c *controller) Run(stop <-chan struct{}) {
 	log.Info("controller terminated")
 }
 
-func (c *controller) ConfigGroupVersions() []model.ConfigGroupVersion {
-	list := make([]model.ConfigGroupVersion, 0)
-	for _, group := range c.client.ConfigGroupVersions() {
-		list = append(list, *group)
-	}
-	return list
+func (c *controller) ConfigGroupVersions() []*model.ConfigGroupVersion {
+	return c.client.ConfigGroupVersions()
 }
 
 func (c *controller) Get(typ, name, namespace string) (*model.Config, bool) {

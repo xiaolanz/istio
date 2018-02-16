@@ -29,7 +29,7 @@ import (
 // Make creates an aggregate config store from several config stores and
 // unifies their descriptors
 func Make(stores []model.ConfigStore) (model.ConfigStore, error) {
-	union := make([]model.ConfigGroupVersion, 0)
+	union := make([]*model.ConfigGroupVersion, 0)
 	storeTypes := make(map[string]model.ConfigStore)
 	for _, store := range stores {
 		for _, cgv := range store.ConfigGroupVersions() {
@@ -69,7 +69,7 @@ func MakeCache(caches []model.ConfigStoreCache) (model.ConfigStoreCache, error) 
 
 type store struct {
 	// descriptor is the unified
-	configGroupVersions []model.ConfigGroupVersion
+	configGroupVersions []*model.ConfigGroupVersion
 
 	// stores is a mapping from config type to a store
 	stores map[string]model.ConfigStore
@@ -124,7 +124,7 @@ type storeCache struct {
 	caches []model.ConfigStoreCache
 }
 
-func (cr *storeCache) ConfigGroupVersions() []model.ConfigGroupVersion {
+func (cr *storeCache) ConfigGroupVersions() []*model.ConfigGroupVersion {
 	return cr.store.ConfigGroupVersions()
 }
 
