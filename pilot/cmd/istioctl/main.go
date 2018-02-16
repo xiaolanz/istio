@@ -646,22 +646,7 @@ func printYamlOutput(configClient *crd.Client, configList []model.Config) {
 }
 
 func newClient() (*crd.Client, error) {
-	// TODO: use model.IstioConfigTypes once model.IngressRule is deprecated
-	return crd.NewClient(kubeconfig, model.ConfigGroupVersion{
-		model.RouteRule,
-		model.V1alpha2RouteRule,
-		model.Gateway,
-		model.EgressRule,
-		model.ExternalService,
-		model.DestinationPolicy,
-		model.DestinationRule,
-		model.HTTPAPISpec,
-		model.HTTPAPISpecBinding,
-		model.QuotaSpec,
-		model.QuotaSpecBinding,
-		model.EndUserAuthenticationPolicySpec,
-		model.EndUserAuthenticationPolicySpecBinding,
-	}, "")
+	return crd.NewClient(kubeconfig, []*model.ConfigGroupVersion{model.IstioConfigTypes[0]}, "")
 }
 
 func supportedTypes(configClient *crd.Client) []string {

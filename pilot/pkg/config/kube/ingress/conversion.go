@@ -26,7 +26,6 @@ import (
 
 	meshconfig "istio.io/api/mesh/v1alpha1"
 	routing "istio.io/api/routing/v1alpha1"
-	"istio.io/istio/pilot/pkg/config/kube/crd"
 	"istio.io/istio/pilot/pkg/model"
 	"istio.io/istio/pilot/pkg/serviceregistry/kube"
 	"istio.io/istio/pkg/log"
@@ -115,8 +114,8 @@ func createIngressRule(name, host, path, domainSuffix string,
 	return model.Config{
 		ConfigMeta: model.ConfigMeta{
 			Type:            model.IngressRule.Type,
-			Group:           crd.ResourceAPIGroup(&model.IngressRule),
-			Version:         model.IngressRule.Version,
+			Group:           model.IngressRule.Group(),
+			Version:         model.IngressRule.Version(),
 			Name:            name,
 			Namespace:       ingress.Namespace,
 			Domain:          domainSuffix,

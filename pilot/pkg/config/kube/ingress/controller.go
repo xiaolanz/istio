@@ -134,8 +134,8 @@ func (c *controller) Run(stop <-chan struct{}) {
 	<-stop
 }
 
-func (c *controller) ConfigDescriptor() model.ConfigGroupVersion {
-	return model.ConfigGroupVersion{model.IngressRule}
+func (c *controller) ConfigGroupVersions() []*model.ConfigGroupVersion {
+	return []*model.ConfigGroupVersion{model.IstioConfigTypes[1]}
 }
 
 func (c *controller) Get(typ, name, namespace string) (*model.Config, bool) {
