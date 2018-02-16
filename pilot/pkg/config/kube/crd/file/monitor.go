@@ -83,7 +83,7 @@ type Monitor struct {
 
 // NewMonitor creates a new config store that monitors files under the given root directory for changes to config.
 // If no types are provided in the descriptor, all IstioConfigTypes will be allowed.
-func NewMonitor(delegateStore model.ConfigStore, rootDirectory string, descriptor model.ConfigGroupVersion) *Monitor {
+func NewMonitor(delegateStore model.ConfigStore, rootDirectory string, configGroupVersions []*model.ConfigGroupVersion) *Monitor {
 	monitor := &Monitor{
 		store:         delegateStore,
 		root:          rootDirectory,
@@ -91,16 +91,25 @@ func NewMonitor(delegateStore model.ConfigStore, rootDirectory string, descripto
 		checkDuration: defaultDuration,
 	}
 
-	types := descriptor.Types()
-	if len(types) == 0 {
-		for _, group := range model.IstioConfigTypes {
-			types = append(types, group.Types())
-		}
+	types := make([]string, 0)
+	for _, group := range configGroupVersions {
+		types = append(types, group.Types()...)
 	}
 
-	for _, k := range types {
-		if schema, ok := model.IstioConfigTypes.GetByType(k); ok {
-			monitor.types[schema.Type] = true
+	if len(types) == 0 {
+		for _, group := range model.IstioConfigTypes {
+			for _, typ := range group.Types() {
+				monitor.types[typ] = true
+			}
+		}
+		return monitor
+	}
+
+	for _, typ := range types {
+		for _, group := range model.IstioConfigTypes {
+			if _, ok := group.GetByType(typ); ok {
+				monitor.types[typ] = true
+			}
 		}
 	}
 	return monitor

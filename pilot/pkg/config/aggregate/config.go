@@ -75,7 +75,7 @@ type store struct {
 	stores map[string]model.ConfigStore
 }
 
-func (cr *store) ConfigGroupVersions() []model.ConfigGroupVersion {
+func (cr *store) ConfigGroupVersions() []*model.ConfigGroupVersion {
 	return cr.ConfigGroupVersions()
 }
 
