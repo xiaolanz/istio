@@ -213,7 +213,7 @@ func TestAdmissionController(t *testing.T) {
 			namespaces = []string{metav1.NamespaceAll}
 		}
 		testAdmissionController, err := NewController(nil, ControllerOptions{
-			Descriptor:                   mock.Types,
+			ConfigGroupVersions:          mock.Types,
 			ExternalAdmissionWebhookName: testAdmissionHookName,
 			ServiceName:                  testAdmissionServiceName,
 			ServiceNamespace:             "istio-system",
@@ -324,7 +324,7 @@ func TestServe(t *testing.T) {
 	}
 
 	testAdmissionController, err := NewController(nil, ControllerOptions{
-		Descriptor:                   mock.Types,
+		ConfigGroupVersions:          mock.Types,
 		ExternalAdmissionWebhookName: testAdmissionHookName,
 		ServiceName:                  testAdmissionServiceName,
 		ServiceNamespace:             "istio-system",
@@ -392,7 +392,7 @@ func TestServe(t *testing.T) {
 
 func TestRegister(t *testing.T) {
 	testAdmissionController, err := NewController(nil, ControllerOptions{
-		Descriptor:                   mock.Types,
+		ConfigGroupVersions:          mock.Types,
 		ExternalAdmissionWebhookName: testAdmissionHookName,
 		ServiceName:                  testAdmissionServiceName,
 		ServiceNamespace:             "istio-system",

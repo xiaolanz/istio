@@ -52,9 +52,9 @@ const (
 // ControllerOptions contains the configuration for the Istio Pilot validation
 // admission controller.
 type ControllerOptions struct {
-	// Descriptor defines the list of supported configuration model
+	// ConfigGroupVersions defines the list of supported configuration model
 	// types for Pilot.
-	Descriptor model.ConfigGroupVersion
+	ConfigGroupVersions []*model.ConfigGroupVersion
 
 	// ExternalAdmissionWebhookName is the name of the
 	// ExternalAdmissionHook which describes he external admission
@@ -252,19 +252,21 @@ func (ac *AdmissionController) unregister(client clientadmissionregistrationv1be
 // configuration types.
 func (ac *AdmissionController) register(client clientadmissionregistrationv1beta1.ValidatingWebhookConfigurationInterface, caCert []byte) error { // nolint: lll
 	var rules []admissionregistrationv1beta1.RuleWithOperations
-	for _, schema := range ac.options.Descriptor {
-		rules = append(rules,
-			admissionregistrationv1beta1.RuleWithOperations{
-				Operations: []admissionregistrationv1beta1.OperationType{
-					admissionregistrationv1beta1.Create,
-					admissionregistrationv1beta1.Update,
-				},
-				Rule: admissionregistrationv1beta1.Rule{
-					APIGroups:   []string{crd.ResourceAPIGroup(&schema)},
-					APIVersions: []string{schema.Version},
-					Resources:   []string{crd.ResourceName(schema.Plural)},
-				},
-			})
+	for _, group := range ac.options.ConfigGroupVersions {
+		for _, schema := range group.Schemas() {
+			rules = append(rules,
+				admissionregistrationv1beta1.RuleWithOperations{
+					Operations: []admissionregistrationv1beta1.OperationType{
+						admissionregistrationv1beta1.Create,
+						admissionregistrationv1beta1.Update,
+					},
+					Rule: admissionregistrationv1beta1.Rule{
+						APIGroups:   []string{schema.Group()},
+						APIVersions: []string{schema.Version()},
+						Resources:   []string{crd.ResourceName(schema.Plural)},
+					},
+				})
+		}
 	}
 
 	webhook := &admissionregistrationv1beta1.ValidatingWebhookConfiguration{
@@ -378,19 +380,22 @@ func (ac *AdmissionController) admit(request *admissionv1beta1.AdmissionRequest)
 		return &admissionv1beta1.AdmissionResponse{Allowed: true}
 	}
 
-	schema, exists := ac.options.Descriptor.GetByType(crd.CamelCaseToKabobCase(obj.Kind))
-	if !exists {
-		return makeErrorStatus("unrecognized type %v", obj.Kind)
-	}
+	for _, group := range ac.options.ConfigGroupVersions {
+		schema, exists := group.GetByType(crd.CamelCaseToKabobCase(obj.Kind))
+		if !exists {
+			continue
+		}
 
-	out, err := crd.ConvertObject(schema, &obj, ac.options.DomainSuffix)
-	if err != nil {
-		return makeErrorStatus("error decoding configuration: %v", err)
-	}
+		out, err := crd.ConvertObject(schema, &obj, ac.options.DomainSuffix)
+		if err != nil {
+			return makeErrorStatus("error decoding configuration: %v", err)
+		}
 
-	if err := schema.Validate(out.Spec); err != nil {
-		return makeErrorStatus("configuration is invalid: %v", err)
-	}
+		if err := schema.Validate(out.Spec); err != nil {
+			return makeErrorStatus("configuration is invalid: %v", err)
+		}
 
-	return &admissionv1beta1.AdmissionResponse{Allowed: true}
+		return &admissionv1beta1.AdmissionResponse{Allowed: true}
+	}
+	return makeErrorStatus("unrecognized type %v", obj.Kind)
 }

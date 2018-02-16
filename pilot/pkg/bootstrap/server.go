@@ -601,7 +601,7 @@ func (s *Server) initAdmissionController(args *PilotArgs) error {
 		SecretName:                   args.Admission.SecretName,
 		Port:                         args.Admission.Port,
 		RegistrationDelay:            args.Admission.RegistrationDelay,
-		Descriptor:                   configGroupVersions,
+		ConfigGroupVersions:          configGroupVersions,
 		ServiceNamespace:             args.Namespace,
 		DomainSuffix:                 args.Config.ControllerOptions.DomainSuffix,
 		ValidateNamespaces: []string{
