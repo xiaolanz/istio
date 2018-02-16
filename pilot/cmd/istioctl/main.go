@@ -564,13 +564,15 @@ func main() {
 
 // The schema is based on the kind (for example "routerule" or "destinationpolicy")
 func schema(configClient *crd.Client, typ string) (model.ProtoSchema, error) {
-	for _, desc := range configClient.ConfigDescriptor() {
-		switch typ {
-		case desc.Type, desc.Plural: // legacy hyphenated resources names
-			return model.ProtoSchema{}, fmt.Errorf("%q not recognized. Please use non-hyphenated resource name %q",
-				typ, crd.ResourceName(typ))
-		case crd.ResourceName(desc.Type), crd.ResourceName(desc.Plural):
-			return desc, nil
+	for _, group := range configClient.ConfigGroupVersions() {
+		for _, desc := range group.Schemas() {
+			switch typ {
+			case desc.Type, desc.Plural: // legacy hyphenated resources names
+				return model.ProtoSchema{}, fmt.Errorf("%q not recognized. Please use non-hyphenated resource name %q",
+					typ, crd.ResourceName(typ))
+			case crd.ResourceName(desc.Type), crd.ResourceName(desc.Plural):
+				return desc, nil
+			}
 		}
 	}
 	return model.ProtoSchema{}, fmt.Errorf("configuration type %s not found, the types are %v",
@@ -623,25 +625,32 @@ func printShortOutput(_ *crd.Client, configList []model.Config) {
 
 // Print as YAML
 func printYamlOutput(configClient *crd.Client, configList []model.Config) {
-	descriptor := configClient.ConfigDescriptor()
 	for _, config := range configList {
-		schema, exists := descriptor.GetByType(config.Type)
-		if !exists {
+		found := false
+		for _, group := range configClient.ConfigGroupVersions() {
+			schema, exists := group.GetByType(config.Type)
+			if !exists {
+				continue
+			}
+			found = true
+			obj, err := crd.ConvertConfig(schema, config)
+			if err != nil {
+				log.Errorf("Could not decode %v: %v", config.Name, err)
+				break
+			}
+			bytes, err := yaml.Marshal(obj)
+			if err != nil {
+				log.Errorf("Could not convert %v to YAML: %v", config, err)
+				break
+			}
+			fmt.Print(string(bytes))
+			fmt.Println("---")
+		}
+		if !found {
 			log.Errorf("Unknown kind %q for %v", crd.ResourceName(config.Type), config.Name)
+		} else {
 			continue
 		}
-		obj, err := crd.ConvertConfig(schema, config)
-		if err != nil {
-			log.Errorf("Could not decode %v: %v", config.Name, err)
-			continue
-		}
-		bytes, err := yaml.Marshal(obj)
-		if err != nil {
-			log.Errorf("Could not convert %v to YAML: %v", config, err)
-			continue
-		}
-		fmt.Print(string(bytes))
-		fmt.Println("---")
 	}
 }
 
@@ -650,7 +659,11 @@ func newClient() (*crd.Client, error) {
 }
 
 func supportedTypes(configClient *crd.Client) []string {
-	types := configClient.ConfigDescriptor().Types()
+	types := make([]string, 0)
+
+	for _, group := range configClient.ConfigGroupVersions() {
+		types = append(types, group.Types()...)
+	}
 	for i := range types {
 		types[i] = crd.ResourceName(types[i])
 	}
@@ -710,7 +723,9 @@ func restClientForOthers(config *rest.Config) (*rest.RESTClient, error) {
 }
 
 func prepareClientForOthers(configs []crd.IstioKind) (*rest.RESTClient, map[string]metav1.APIResource, error) {
-	restConfig, err := crd.CreateRESTConfig(kubeconfig)
+	// TODO(xiaolanz) This assumes that all Mixer configs are under one apiVersion. Need to be changed when Mixer
+	// config separate their versions. See issue: https://github.com/istio/istio/issues/3307
+	restConfig, err := crd.CreateRESTConfig(kubeconfig, model.IstioConfigTypes[0])
 	if err != nil {
 		return nil, nil, err
 	}
