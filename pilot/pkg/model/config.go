@@ -204,19 +204,16 @@ type ProtoSchema struct {
 	// Validate configuration as a protobuf message assuming the object is an
 	// instance of the expected message type
 	Validate func(config proto.Message) error
-
-	// ConfigGroupVersions references to the config group version this proto schema belongs to.
-	ConfigGroupVersion *ConfigGroupVersion
 }
 
 // Group generates the API group for each schema.
 func (ps *ProtoSchema) Group() string {
-	return ps.ConfigGroupVersion.Group()
+	return IstioTypeGroupLookup[ps.Type].Group()
 }
 
 // Version generates the k8s API group for each schema.
 func (ps *ProtoSchema) Version() string {
-	return ps.ConfigGroupVersion.Version()
+	return IstioTypeGroupLookup[ps.Type].Version()
 }
 
 // Schemas lists all proto schemas in the config API group version.
@@ -496,7 +493,17 @@ var (
 			},
 		},
 	}
+
+	IstioTypeGroupLookup = make(map[string]*ConfigGroupVersion)
 )
+
+func init() {
+	for _, group := range IstioConfigTypes {
+		for _, s := range group.Schemas() {
+			IstioTypeGroupLookup[s.Type] = group
+		}
+	}
+}
 
 // ResolveHostname uses metadata information to resolve a service reference to
 // a fully qualified hostname. The metadata namespace and domain are used as

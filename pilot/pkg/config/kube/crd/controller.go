@@ -68,7 +68,11 @@ func NewController(client *Client, options kube.ControllerOptions) model.ConfigS
 }
 
 func (c *controller) addInformer(schema model.ProtoSchema, namespace string, resyncPeriod time.Duration) {
-	av := apiVersion(schema.ConfigGroupVersion)
+	cgv, ok := model.IstioTypeGroupLookup[schema.Type]
+	if !ok {
+		return
+	}
+	av := apiVersion(cgv)
 	cc, ok := c.client.clientset[av]
 	if !ok {
 		return
