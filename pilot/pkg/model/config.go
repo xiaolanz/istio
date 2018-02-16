@@ -264,6 +264,14 @@ func (cgv *ConfigGroupVersion) Types() []string {
 	return types
 }
 
+func NewConfigGroupVersion(groupPrefix, version string, schemas []ProtoSchema) ConfigGroupVersion {
+	return ConfigGroupVersion{
+		groupPrefix,
+		version,
+		schemas,
+	}
+}
+
 // IstioConfigStore is a specialized interface to access config store using
 // Istio configuration types
 type IstioConfigStore interface {

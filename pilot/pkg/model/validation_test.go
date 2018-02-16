@@ -34,7 +34,7 @@ import (
 	"istio.io/istio/pilot/pkg/model/test"
 )
 
-func TestConfigDescriptorValidate(t *testing.T) {
+func TestConfigGroupVersionValidate(t *testing.T) {
 	badLabel := strings.Repeat("a", dns1123LabelMaxLength+1)
 	goodLabel := strings.Repeat("a", dns1123LabelMaxLength-1)
 
@@ -44,33 +44,43 @@ func TestConfigDescriptorValidate(t *testing.T) {
 		wantErr    bool
 	}{{
 		name:       "Valid ConfigGroupVersions (IstioConfig)",
-		descriptor: IstioConfigTypes,
+		descriptor: *IstioConfigTypes[0],
 		wantErr:    false,
 	}, {
 		name: "Invalid DNS11234Label in ConfigGroupVersions",
-		descriptor: ConfigGroupVersion{ProtoSchema{
-			Type:        badLabel,
-			MessageName: RouteRule.MessageName,
-		}},
+		descriptor: NewConfigGroupVersion("config", "alphav1",
+			[]ProtoSchema{
+				{
+					Type:        badLabel,
+					MessageName: RouteRule.MessageName,
+				},
+			}),
 		wantErr: true,
 	}, {
 		name: "Bad MessageName in ProtoMessage",
-		descriptor: ConfigGroupVersion{ProtoSchema{
-			Type:        goodLabel,
-			MessageName: "nonexistent",
-		}},
+		descriptor: NewConfigGroupVersion("config", "alphav1",
+			[]ProtoSchema{
+				{
+					Type:        goodLabel,
+					MessageName: "nonexistent",
+				},
+			}),
 		wantErr: true,
 	}, {
 		name: "Missing key function",
-		descriptor: ConfigGroupVersion{ProtoSchema{
-			Type:        RouteRule.Type,
-			MessageName: RouteRule.MessageName,
-		}},
+		descriptor: NewConfigGroupVersion("config", "alphav1",
+			[]ProtoSchema{
+				{
+					Type:        RouteRule.Type,
+					MessageName: RouteRule.MessageName,
+				},
+			}),
 		wantErr: true,
 	}, {
-		name:       "Duplicate type and message",
-		descriptor: ConfigGroupVersion{RouteRule, RouteRule},
-		wantErr:    true,
+		name: "Duplicate type and message",
+		descriptor: NewConfigGroupVersion("config", "alphav1",
+			[]ProtoSchema{RouteRule, RouteRule}),
+		wantErr: true,
 	}}
 
 	for _, c := range cases {
