@@ -10,169 +10,177 @@ package crd
 // as declared in the Pilot config model.
 
 import (
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+    meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+    "k8s.io/apimachinery/pkg/runtime"
 
-	"istio.io/istio/pilot/pkg/model"
+    "istio.io/istio/pilot/pkg/model"
 )
 
-type schemaType struct {
-	schema     model.ProtoSchema
-	object     IstioObject
-	collection IstioObjectList
-}
-
-var knownTypes = map[string]schemaType{
-	model.MockConfig.Type: {
-		schema: model.MockConfig,
-		object: &MockConfig{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "MockConfig",
-				APIVersion: apiVersion(&model.MockConfig),
-			},
-		},
-		collection: &MockConfigList{},
-	},
-	model.RouteRule.Type: {
-		schema: model.RouteRule,
-		object: &RouteRule{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "RouteRule",
-				APIVersion: apiVersion(&model.RouteRule),
-			},
-		},
-		collection: &RouteRuleList{},
-	},
-	model.VirtualService.Type: {
-		schema: model.VirtualService,
-		object: &VirtualService{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "VirtualService",
-				APIVersion: apiVersion(&model.VirtualService),
-			},
-		},
-		collection: &VirtualServiceList{},
-	},
-	model.IngressRule.Type: {
-		schema: model.IngressRule,
-		object: &IngressRule{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "IngressRule",
-				APIVersion: apiVersion(&model.IngressRule),
-			},
-		},
-		collection: &IngressRuleList{},
-	},
-	model.Gateway.Type: {
-		schema: model.Gateway,
-		object: &Gateway{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "Gateway",
-				APIVersion: apiVersion(&model.Gateway),
-			},
-		},
-		collection: &GatewayList{},
-	},
-	model.EgressRule.Type: {
-		schema: model.EgressRule,
-		object: &EgressRule{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "EgressRule",
-				APIVersion: apiVersion(&model.EgressRule),
-			},
-		},
-		collection: &EgressRuleList{},
-	},
-	model.ExternalService.Type: {
-		schema: model.ExternalService,
-		object: &ExternalService{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "ExternalService",
-				APIVersion: apiVersion(&model.ExternalService),
-			},
-		},
-		collection: &ExternalServiceList{},
-	},
-	model.DestinationPolicy.Type: {
-		schema: model.DestinationPolicy,
-		object: &DestinationPolicy{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "DestinationPolicy",
-				APIVersion: apiVersion(&model.DestinationPolicy),
-			},
-		},
-		collection: &DestinationPolicyList{},
-	},
-	model.DestinationRule.Type: {
-		schema: model.DestinationRule,
-		object: &DestinationRule{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "DestinationRule",
-				APIVersion: apiVersion(&model.DestinationRule),
-			},
-		},
-		collection: &DestinationRuleList{},
-	},
-	model.HTTPAPISpec.Type: {
-		schema: model.HTTPAPISpec,
-		object: &HTTPAPISpec{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "HTTPAPISpec",
-				APIVersion: apiVersion(&model.HTTPAPISpec),
-			},
-		},
-		collection: &HTTPAPISpecList{},
-	},
-	model.HTTPAPISpecBinding.Type: {
-		schema: model.HTTPAPISpecBinding,
-		object: &HTTPAPISpecBinding{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "HTTPAPISpecBinding",
-				APIVersion: apiVersion(&model.HTTPAPISpecBinding),
-			},
-		},
-		collection: &HTTPAPISpecBindingList{},
-	},
-	model.QuotaSpec.Type: {
-		schema: model.QuotaSpec,
-		object: &QuotaSpec{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "QuotaSpec",
-				APIVersion: apiVersion(&model.QuotaSpec),
-			},
-		},
-		collection: &QuotaSpecList{},
-	},
-	model.QuotaSpecBinding.Type: {
-		schema: model.QuotaSpecBinding,
-		object: &QuotaSpecBinding{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "QuotaSpecBinding",
-				APIVersion: apiVersion(&model.QuotaSpecBinding),
-			},
-		},
-		collection: &QuotaSpecBindingList{},
-	},
-	model.EndUserAuthenticationPolicySpec.Type: {
-		schema: model.EndUserAuthenticationPolicySpec,
-		object: &EndUserAuthenticationPolicySpec{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "EndUserAuthenticationPolicySpec",
-				APIVersion: apiVersion(&model.EndUserAuthenticationPolicySpec),
-			},
-		},
-		collection: &EndUserAuthenticationPolicySpecList{},
-	},
-	model.EndUserAuthenticationPolicySpecBinding.Type: {
-		schema: model.EndUserAuthenticationPolicySpecBinding,
-		object: &EndUserAuthenticationPolicySpecBinding{
-			TypeMeta: meta_v1.TypeMeta{
-				Kind:       "EndUserAuthenticationPolicySpecBinding",
-				APIVersion: apiVersion(&model.EndUserAuthenticationPolicySpecBinding),
-			},
-		},
-		collection: &EndUserAuthenticationPolicySpecBindingList{},
-	},
+var knownTypes = map[string]struct {
+    schema     model.ProtoSchema
+    object     IstioObject
+    collection IstioObjectList
+}{
+    model.MockConfig.Type: {
+        schema: model.MockConfig,
+        object: &MockConfig{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "MockConfig",
+                APIVersion: ResourceGroup(&model.MockConfig) + "/" + model.MockConfig.Version,
+            },
+        },
+        collection: &MockConfigList{},
+    },
+    model.RouteRule.Type: {
+        schema: model.RouteRule,
+        object: &RouteRule{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "RouteRule",
+                APIVersion: ResourceGroup(&model.RouteRule) + "/" + model.RouteRule.Version,
+            },
+        },
+        collection: &RouteRuleList{},
+    },
+    model.VirtualService.Type: {
+        schema: model.VirtualService,
+        object: &VirtualService{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "VirtualService",
+                APIVersion: ResourceGroup(&model.VirtualService) + "/" + model.VirtualService.Version,
+            },
+        },
+        collection: &VirtualServiceList{},
+    },
+    model.IngressRule.Type: {
+        schema: model.IngressRule,
+        object: &IngressRule{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "IngressRule",
+                APIVersion: ResourceGroup(&model.IngressRule) + "/" + model.IngressRule.Version,
+            },
+        },
+        collection: &IngressRuleList{},
+    },
+    model.Gateway.Type: {
+        schema: model.Gateway,
+        object: &Gateway{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "Gateway",
+                APIVersion: ResourceGroup(&model.Gateway) + "/" + model.Gateway.Version,
+            },
+        },
+        collection: &GatewayList{},
+    },
+    model.EgressRule.Type: {
+        schema: model.EgressRule,
+        object: &EgressRule{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "EgressRule",
+                APIVersion: ResourceGroup(&model.EgressRule) + "/" + model.EgressRule.Version,
+            },
+        },
+        collection: &EgressRuleList{},
+    },
+    model.ExternalService.Type: {
+        schema: model.ExternalService,
+        object: &ExternalService{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "ExternalService",
+                APIVersion: ResourceGroup(&model.ExternalService) + "/" + model.ExternalService.Version,
+            },
+        },
+        collection: &ExternalServiceList{},
+    },
+    model.DestinationPolicy.Type: {
+        schema: model.DestinationPolicy,
+        object: &DestinationPolicy{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "DestinationPolicy",
+                APIVersion: ResourceGroup(&model.DestinationPolicy) + "/" + model.DestinationPolicy.Version,
+            },
+        },
+        collection: &DestinationPolicyList{},
+    },
+    model.DestinationRule.Type: {
+        schema: model.DestinationRule,
+        object: &DestinationRule{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "DestinationRule",
+                APIVersion: ResourceGroup(&model.DestinationRule) + "/" + model.DestinationRule.Version,
+            },
+        },
+        collection: &DestinationRuleList{},
+    },
+    model.HTTPAPISpec.Type: {
+        schema: model.HTTPAPISpec,
+        object: &HTTPAPISpec{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "HTTPAPISpec",
+                APIVersion: ResourceGroup(&model.HTTPAPISpec) + "/" + model.HTTPAPISpec.Version,
+            },
+        },
+        collection: &HTTPAPISpecList{},
+    },
+    model.HTTPAPISpecBinding.Type: {
+        schema: model.HTTPAPISpecBinding,
+        object: &HTTPAPISpecBinding{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "HTTPAPISpecBinding",
+                APIVersion: ResourceGroup(&model.HTTPAPISpecBinding) + "/" + model.HTTPAPISpecBinding.Version,
+            },
+        },
+        collection: &HTTPAPISpecBindingList{},
+    },
+    model.QuotaSpec.Type: {
+        schema: model.QuotaSpec,
+        object: &QuotaSpec{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "QuotaSpec",
+                APIVersion: ResourceGroup(&model.QuotaSpec) + "/" + model.QuotaSpec.Version,
+            },
+        },
+        collection: &QuotaSpecList{},
+    },
+    model.QuotaSpecBinding.Type: {
+        schema: model.QuotaSpecBinding,
+        object: &QuotaSpecBinding{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "QuotaSpecBinding",
+                APIVersion: ResourceGroup(&model.QuotaSpecBinding) + "/" + model.QuotaSpecBinding.Version,
+            },
+        },
+        collection: &QuotaSpecBindingList{},
+    },
+    model.EndUserAuthenticationPolicySpec.Type: {
+        schema: model.EndUserAuthenticationPolicySpec,
+        object: &EndUserAuthenticationPolicySpec{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "EndUserAuthenticationPolicySpec",
+                APIVersion: ResourceGroup(&model.EndUserAuthenticationPolicySpec) + "/" + model.EndUserAuthenticationPolicySpec.Version,
+            },
+        },
+        collection: &EndUserAuthenticationPolicySpecList{},
+    },
+    model.EndUserAuthenticationPolicySpecBinding.Type: {
+        schema: model.EndUserAuthenticationPolicySpecBinding,
+        object: &EndUserAuthenticationPolicySpecBinding{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "EndUserAuthenticationPolicySpecBinding",
+                APIVersion: ResourceGroup(&model.EndUserAuthenticationPolicySpecBinding) + "/" + model.EndUserAuthenticationPolicySpecBinding.Version,
+            },
+        },
+        collection: &EndUserAuthenticationPolicySpecBindingList{},
+    },
+    model.AuthenticationPolicy.Type: {
+        schema: model.AuthenticationPolicy,
+        object: &AuthenticationPolicy{
+            TypeMeta: meta_v1.TypeMeta{
+                Kind:       "AuthenticationPolicy",
+                APIVersion: ResourceGroup(&model.AuthenticationPolicy) + "/" + model.AuthenticationPolicy.Version,
+            },
+        },
+        collection: &AuthenticationPolicyList{},
+    },
 }
 
 // MockConfig is the generic Kubernetes API object wrapper
@@ -1713,6 +1721,109 @@ func (in *EndUserAuthenticationPolicySpecBindingList) DeepCopy() *EndUserAuthent
 
 // DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
 func (in *EndUserAuthenticationPolicySpecBindingList) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+
+	return nil
+}
+
+// AuthenticationPolicy is the generic Kubernetes API object wrapper
+type AuthenticationPolicy struct {
+	meta_v1.TypeMeta   `json:",inline"`
+	meta_v1.ObjectMeta `json:"metadata"`
+	Spec               map[string]interface{} `json:"spec"`
+}
+
+// GetSpec from a wrapper
+func (in *AuthenticationPolicy) GetSpec() map[string]interface{} {
+	return in.Spec
+}
+
+// SetSpec for a wrapper
+func (in *AuthenticationPolicy) SetSpec(spec map[string]interface{}) {
+	in.Spec = spec
+}
+
+// GetObjectMeta from a wrapper
+func (in *AuthenticationPolicy) GetObjectMeta() meta_v1.ObjectMeta {
+	return in.ObjectMeta
+}
+
+// SetObjectMeta for a wrapper
+func (in *AuthenticationPolicy) SetObjectMeta(metadata meta_v1.ObjectMeta) {
+	in.ObjectMeta = metadata
+}
+
+// AuthenticationPolicyList is the generic Kubernetes API list wrapper
+type AuthenticationPolicyList struct {
+	meta_v1.TypeMeta `json:",inline"`
+	meta_v1.ListMeta `json:"metadata"`
+	Items            []AuthenticationPolicy `json:"items"`
+}
+
+// GetItems from a wrapper
+func (in *AuthenticationPolicyList) GetItems() []IstioObject {
+	out := make([]IstioObject, len(in.Items))
+	for i := range in.Items {
+		out[i] = &in.Items[i]
+	}
+	return out
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *AuthenticationPolicy) DeepCopyInto(out *AuthenticationPolicy) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	out.Spec = in.Spec
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new AuthenticationPolicy.
+func (in *AuthenticationPolicy) DeepCopy() *AuthenticationPolicy {
+	if in == nil {
+		return nil
+	}
+	out := new(AuthenticationPolicy)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *AuthenticationPolicy) DeepCopyObject() runtime.Object {
+	if c := in.DeepCopy(); c != nil {
+		return c
+	}
+
+	return nil
+}
+
+// DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
+func (in *AuthenticationPolicyList) DeepCopyInto(out *AuthenticationPolicyList) {
+	*out = *in
+	out.TypeMeta = in.TypeMeta
+	out.ListMeta = in.ListMeta
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]AuthenticationPolicy, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+}
+
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new AuthenticationPolicyList.
+func (in *AuthenticationPolicyList) DeepCopy() *AuthenticationPolicyList {
+	if in == nil {
+		return nil
+	}
+	out := new(AuthenticationPolicyList)
+	in.DeepCopyInto(out)
+	return out
+}
+
+// DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
+func (in *AuthenticationPolicyList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
