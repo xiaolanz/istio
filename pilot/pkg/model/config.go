@@ -257,7 +257,7 @@ type IstioConfigStore interface {
 	// destination instances.
 	RouteRulesByDestination(destination []*ServiceInstance, domain string) []Config
 
-	// Policy returns a policy for a service version that match at least one of
+	// AuthenticationPolicy returns a policy for a service version that match at least one of
 	// the source instances.  The labels must match precisely in the policy.
 	Policy(source []*ServiceInstance, destination string, labels Labels) *Config
 
@@ -453,7 +453,7 @@ var (
 		Plural:      "policies",
 		Group:       "authentication",
 		Version:     "v1alpha1",
-		MessageName: "istio.authentication.v1alpha1.Policy",
+		MessageName: "istio.authentication.v1alpha1.AuthenticationPolicy",
 		Validate:    ValidateAuthenticationPolicy,
 	}
 
@@ -877,23 +877,23 @@ func (store *istioConfigStore) AuthenticationPolicyByDestination(hostname string
 		// 2 - namespace scope.
 		// 3 - workload (service).
 		matchLevel := 0
-		if len(policy.Destinations) > 0 {
-			for _, dest := range policy.Destinations {
+		/*
+			if len(policy.Destinations) > 0 {
+				for _, dest := range policy.Destinations {
 
-				if hostname != ResolveFQDNFromDestination(spec.ConfigMeta, dest) {
-					continue
+						if hostname != ResolveFQDNFromDestination(spec.ConfigMeta, dest) {
+							continue
+						}
+							// If destination port is defined, it must match.
+							if !port.Match(dest.GetPort()) {
+								continue
+					matchLevel = 3
+					break
 				}
-				// If destination port is defined, it must match.
-				if !port.Match(dest.GetPort()) {
-					continue
-				}
-				matchLevel = 3
-				break
-			}
-		} else {
-			// Match on namespace level.
-			matchLevel = 2
-		}
+			} else {
+				// Match on namespace level.
+				matchLevel = 2
+			} */
 		// Swap output policy that is match in more specific scope.
 		if matchLevel > currentMatchLevel {
 			currentMatchLevel = matchLevel

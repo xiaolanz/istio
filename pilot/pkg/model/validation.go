@@ -1345,7 +1345,7 @@ func ValidateConnectTimeout(timeout *duration.Duration) error {
 func ValidateMeshConfig(mesh *meshconfig.MeshConfig) (errs error) {
 	if mesh.MixerCheckServer != "" {
 		if err := ValidateProxyAddress(mesh.MixerCheckServer); err != nil {
-			errs = multierror.Append(errs, multierror.Prefix(err, "invalid Policy Check Server address:"))
+			errs = multierror.Append(errs, multierror.Prefix(err, "invalid AuthenticationPolicy Check Server address:"))
 		}
 	}
 
@@ -1658,25 +1658,27 @@ func ValidateAuthenticationPolicy(msg proto.Message) error {
 	}
 	var errs error
 
-	for _, dest := range in.Destinations {
-		errs = appendErrors(errs, validateDestination(dest))
-	}
+	/*
+		for _, dest := range in.Destinations {
+			errs = appendErrors(errs, validateDestination(dest))
+		} */
 
 	for _, method := range in.Peers {
 		errs = appendErrors(errs, validateJwt(method.GetJwt()))
 	}
 
-	for _, rule := range in.CredentialRules {
-		if rule.Binding == authn.CredentialRule_USE_ORIGIN {
-			if len(rule.Origins) == 0 {
-				errs = multierror.Append(
-					errs, errors.New("Credential use origin must define at least one method."))
+	/*
+		for _, rule := range in.CredentialRules {
+			if rule.Binding == authn.CredentialRule_USE_ORIGIN {
+				if len(rule.Origins) == 0 {
+					errs = multierror.Append(
+						errs, errors.New("Credential use origin must define at least one method."))
+				}
 			}
-		}
-		for _, method := range rule.Origins {
-			errs = appendErrors(errs, validateJwt(method.Jwt))
-		}
-	}
+			for _, method := range rule.Origins {
+				errs = appendErrors(errs, validateJwt(method.Jwt))
+			}
+		}*/
 	return errs
 }
 

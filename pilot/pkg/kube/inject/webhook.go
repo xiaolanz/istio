@@ -98,7 +98,7 @@ func loadConfig(injectFile, meshFile string) (*Config, *meshconfig.MeshConfig, e
 	}
 
 	log.Infof("New configuration: sha256sum %x", sha256.Sum256(data))
-	log.Infof("Policy: %v", c.Policy)
+	log.Infof("AuthenticationPolicy: %v", c.Policy)
 	log.Infof("Template: |\n  %v", strings.Replace(c.Template, "\n", "\n  ", -1))
 
 	return &c, meshConfig, nil

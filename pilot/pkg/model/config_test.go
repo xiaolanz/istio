@@ -552,21 +552,21 @@ func TestPolicy(t *testing.T) {
 	}
 	if out := store.Policy(instances, mock.WorldService.Hostname, labels); out == nil ||
 		!reflect.DeepEqual(policy1, out.Spec) {
-		t.Errorf("Policy() => expected %#v but got %#v", policy1, out)
+		t.Errorf("AuthenticationPolicy() => expected %#v but got %#v", policy1, out)
 	}
 	if out := store.Policy(instances, mock.HelloService.Hostname, labels); out != nil {
-		t.Error("Policy() => expected no match for destination-matched policy")
+		t.Error("AuthenticationPolicy() => expected no match for destination-matched policy")
 	}
 	if out := store.Policy(instances, mock.WorldService.Hostname, nil); out != nil {
-		t.Error("Policy() => expected no match for labels-matched policy")
+		t.Error("AuthenticationPolicy() => expected no match for labels-matched policy")
 	}
 	if out := store.Policy(nil, mock.WorldService.Hostname, labels); out != nil {
-		t.Error("Policy() => expected no match for source-matched policy")
+		t.Error("AuthenticationPolicy() => expected no match for source-matched policy")
 	}
 
 	// erroring out list
 	if out := model.MakeIstioStore(errorStore{}).Policy(instances, mock.WorldService.Hostname, labels); out != nil {
-		t.Errorf("Policy() => expected nil but got %v", out)
+		t.Errorf("AuthenticationPolicy() => expected nil but got %v", out)
 	}
 }
 

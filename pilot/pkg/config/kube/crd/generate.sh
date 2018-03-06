@@ -51,27 +51,33 @@ var knownTypes = map[string]schemaType{
 EOF
 
 CRDS="MockConfig RouteRule VirtualService IngressRule Gateway EgressRule ExternalService DestinationPolicy DestinationRule HTTPAPISpec HTTPAPISpecBinding QuotaSpec QuotaSpecBinding EndUserAuthenticationPolicySpec EndUserAuthenticationPolicySpecBinding AuthenticationPolicy"
+CRD_KINDS="MockConfig RouteRule VirtualService IngressRule Gateway EgressRule ExternalService DestinationPolicy DestinationRule HTTPAPISpec HTTPAPISpecBinding QuotaSpec QuotaSpecBinding EndUserAuthenticationPolicySpec EndUserAuthenticationPolicySpecBinding Policy"
 
+idx=0
 for crd in $CRDS; do
+idx=$(($idx+1))
+k=$(echo $CRD_KINDS | cut -d ' ' -f $idx)
 cat << EOF
     model.$crd.Type: {
         schema: model.$crd,
-        object: &${crd}{
+        object: &$k{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "${crd}",
+                Kind:       model.$crd.Type,
                 APIVersion: apiVersion(&model.$crd),
             },
         },
-        collection: &${crd}List{},
+        collection: &${k}List{},
     },
 EOF
-
 done
 
 cat <<EOF
 }
 EOF
 
+idx=0
 for crd in $CRDS; do
-  sed -e "1,20d;s/IstioKind/$crd/g" $1
+  idx=$(($idx+1))
+  k=$(echo $CRD_KINDS | cut -d ' ' -f $idx)
+  sed -e "1,20d;s/IstioKind/$k/g" $1
 done

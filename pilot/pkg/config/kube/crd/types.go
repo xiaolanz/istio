@@ -27,7 +27,7 @@ var knownTypes = map[string]schemaType{
         schema: model.MockConfig,
         object: &MockConfig{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "MockConfig",
+                Kind:       model.MockConfig.Type,
                 APIVersion: apiVersion(&model.MockConfig),
             },
         },
@@ -37,7 +37,7 @@ var knownTypes = map[string]schemaType{
         schema: model.RouteRule,
         object: &RouteRule{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "RouteRule",
+                Kind:       model.RouteRule.Type,
                 APIVersion: apiVersion(&model.RouteRule),
             },
         },
@@ -47,7 +47,7 @@ var knownTypes = map[string]schemaType{
         schema: model.VirtualService,
         object: &VirtualService{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "VirtualService",
+                Kind:       model.VirtualService.Type,
                 APIVersion: apiVersion(&model.VirtualService),
             },
         },
@@ -57,7 +57,7 @@ var knownTypes = map[string]schemaType{
         schema: model.IngressRule,
         object: &IngressRule{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "IngressRule",
+                Kind:       model.IngressRule.Type,
                 APIVersion: apiVersion(&model.IngressRule),
             },
         },
@@ -67,7 +67,7 @@ var knownTypes = map[string]schemaType{
         schema: model.Gateway,
         object: &Gateway{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "Gateway",
+                Kind:       model.Gateway.Type,
                 APIVersion: apiVersion(&model.Gateway),
             },
         },
@@ -77,7 +77,7 @@ var knownTypes = map[string]schemaType{
         schema: model.EgressRule,
         object: &EgressRule{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "EgressRule",
+                Kind:       model.EgressRule.Type,
                 APIVersion: apiVersion(&model.EgressRule),
             },
         },
@@ -87,7 +87,7 @@ var knownTypes = map[string]schemaType{
         schema: model.ExternalService,
         object: &ExternalService{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "ExternalService",
+                Kind:       model.ExternalService.Type,
                 APIVersion: apiVersion(&model.ExternalService),
             },
         },
@@ -97,7 +97,7 @@ var knownTypes = map[string]schemaType{
         schema: model.DestinationPolicy,
         object: &DestinationPolicy{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "DestinationPolicy",
+                Kind:       model.DestinationPolicy.Type,
                 APIVersion: apiVersion(&model.DestinationPolicy),
             },
         },
@@ -107,7 +107,7 @@ var knownTypes = map[string]schemaType{
         schema: model.DestinationRule,
         object: &DestinationRule{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "DestinationRule",
+                Kind:       model.DestinationRule.Type,
                 APIVersion: apiVersion(&model.DestinationRule),
             },
         },
@@ -117,7 +117,7 @@ var knownTypes = map[string]schemaType{
         schema: model.HTTPAPISpec,
         object: &HTTPAPISpec{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "HTTPAPISpec",
+                Kind:       model.HTTPAPISpec.Type,
                 APIVersion: apiVersion(&model.HTTPAPISpec),
             },
         },
@@ -127,7 +127,7 @@ var knownTypes = map[string]schemaType{
         schema: model.HTTPAPISpecBinding,
         object: &HTTPAPISpecBinding{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "HTTPAPISpecBinding",
+                Kind:       model.HTTPAPISpecBinding.Type,
                 APIVersion: apiVersion(&model.HTTPAPISpecBinding),
             },
         },
@@ -137,7 +137,7 @@ var knownTypes = map[string]schemaType{
         schema: model.QuotaSpec,
         object: &QuotaSpec{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "QuotaSpec",
+                Kind:       model.QuotaSpec.Type,
                 APIVersion: apiVersion(&model.QuotaSpec),
             },
         },
@@ -147,7 +147,7 @@ var knownTypes = map[string]schemaType{
         schema: model.QuotaSpecBinding,
         object: &QuotaSpecBinding{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "QuotaSpecBinding",
+                Kind:       model.QuotaSpecBinding.Type,
                 APIVersion: apiVersion(&model.QuotaSpecBinding),
             },
         },
@@ -157,7 +157,7 @@ var knownTypes = map[string]schemaType{
         schema: model.EndUserAuthenticationPolicySpec,
         object: &EndUserAuthenticationPolicySpec{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "EndUserAuthenticationPolicySpec",
+                Kind:       model.EndUserAuthenticationPolicySpec.Type,
                 APIVersion: apiVersion(&model.EndUserAuthenticationPolicySpec),
             },
         },
@@ -167,7 +167,7 @@ var knownTypes = map[string]schemaType{
         schema: model.EndUserAuthenticationPolicySpecBinding,
         object: &EndUserAuthenticationPolicySpecBinding{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "EndUserAuthenticationPolicySpecBinding",
+                Kind:       model.EndUserAuthenticationPolicySpecBinding.Type,
                 APIVersion: apiVersion(&model.EndUserAuthenticationPolicySpecBinding),
             },
         },
@@ -175,13 +175,13 @@ var knownTypes = map[string]schemaType{
     },
     model.AuthenticationPolicy.Type: {
         schema: model.AuthenticationPolicy,
-        object: &AuthenticationPolicy{
+        object: &Policy{
             TypeMeta: meta_v1.TypeMeta{
-                Kind:       "AuthenticationPolicy",
+                Kind:       model.AuthenticationPolicy.Type,
                 APIVersion: apiVersion(&model.AuthenticationPolicy),
             },
         },
-        collection: &AuthenticationPolicyList{},
+        collection: &PolicyList{},
     },
 }
 
@@ -1730,42 +1730,42 @@ func (in *EndUserAuthenticationPolicySpecBindingList) DeepCopyObject() runtime.O
 	return nil
 }
 
-// AuthenticationPolicy is the generic Kubernetes API object wrapper
-type AuthenticationPolicy struct {
+// Policy is the generic Kubernetes API object wrapper
+type Policy struct {
 	meta_v1.TypeMeta   `json:",inline"`
 	meta_v1.ObjectMeta `json:"metadata"`
 	Spec               map[string]interface{} `json:"spec"`
 }
 
 // GetSpec from a wrapper
-func (in *AuthenticationPolicy) GetSpec() map[string]interface{} {
+func (in *Policy) GetSpec() map[string]interface{} {
 	return in.Spec
 }
 
 // SetSpec for a wrapper
-func (in *AuthenticationPolicy) SetSpec(spec map[string]interface{}) {
+func (in *Policy) SetSpec(spec map[string]interface{}) {
 	in.Spec = spec
 }
 
 // GetObjectMeta from a wrapper
-func (in *AuthenticationPolicy) GetObjectMeta() meta_v1.ObjectMeta {
+func (in *Policy) GetObjectMeta() meta_v1.ObjectMeta {
 	return in.ObjectMeta
 }
 
 // SetObjectMeta for a wrapper
-func (in *AuthenticationPolicy) SetObjectMeta(metadata meta_v1.ObjectMeta) {
+func (in *Policy) SetObjectMeta(metadata meta_v1.ObjectMeta) {
 	in.ObjectMeta = metadata
 }
 
-// AuthenticationPolicyList is the generic Kubernetes API list wrapper
-type AuthenticationPolicyList struct {
+// PolicyList is the generic Kubernetes API list wrapper
+type PolicyList struct {
 	meta_v1.TypeMeta `json:",inline"`
 	meta_v1.ListMeta `json:"metadata"`
-	Items            []AuthenticationPolicy `json:"items"`
+	Items            []Policy `json:"items"`
 }
 
 // GetItems from a wrapper
-func (in *AuthenticationPolicyList) GetItems() []IstioObject {
+func (in *PolicyList) GetItems() []IstioObject {
 	out := make([]IstioObject, len(in.Items))
 	for i := range in.Items {
 		out[i] = &in.Items[i]
@@ -1774,25 +1774,25 @@ func (in *AuthenticationPolicyList) GetItems() []IstioObject {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *AuthenticationPolicy) DeepCopyInto(out *AuthenticationPolicy) {
+func (in *Policy) DeepCopyInto(out *Policy) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
 	out.Spec = in.Spec
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new AuthenticationPolicy.
-func (in *AuthenticationPolicy) DeepCopy() *AuthenticationPolicy {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new Policy.
+func (in *Policy) DeepCopy() *Policy {
 	if in == nil {
 		return nil
 	}
-	out := new(AuthenticationPolicy)
+	out := new(Policy)
 	in.DeepCopyInto(out)
 	return out
 }
 
 // DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
-func (in *AuthenticationPolicy) DeepCopyObject() runtime.Object {
+func (in *Policy) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}
@@ -1801,31 +1801,31 @@ func (in *AuthenticationPolicy) DeepCopyObject() runtime.Object {
 }
 
 // DeepCopyInto is an autogenerated deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (in *AuthenticationPolicyList) DeepCopyInto(out *AuthenticationPolicyList) {
+func (in *PolicyList) DeepCopyInto(out *PolicyList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	out.ListMeta = in.ListMeta
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
-		*out = make([]AuthenticationPolicy, len(*in))
+		*out = make([]Policy, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
 }
 
-// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new AuthenticationPolicyList.
-func (in *AuthenticationPolicyList) DeepCopy() *AuthenticationPolicyList {
+// DeepCopy is an autogenerated deepcopy function, copying the receiver, creating a new PolicyList.
+func (in *PolicyList) DeepCopy() *PolicyList {
 	if in == nil {
 		return nil
 	}
-	out := new(AuthenticationPolicyList)
+	out := new(PolicyList)
 	in.DeepCopyInto(out)
 	return out
 }
 
 // DeepCopyObject is an autogenerated deepcopy function, copying the receiver, creating a new runtime.Object.
-func (in *AuthenticationPolicyList) DeepCopyObject() runtime.Object {
+func (in *PolicyList) DeepCopyObject() runtime.Object {
 	if c := in.DeepCopy(); c != nil {
 		return c
 	}

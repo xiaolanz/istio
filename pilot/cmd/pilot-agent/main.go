@@ -269,7 +269,7 @@ func init() {
 	proxyCmd.PersistentFlags().IntVar(&proxyAdminPort, "proxyAdminPort", int(values.ProxyAdminPort),
 		"Port on which Envoy should listen for administrative commands")
 	proxyCmd.PersistentFlags().StringVar(&controlPlaneAuthPolicy, "controlPlaneAuthPolicy",
-		values.ControlPlaneAuthPolicy.String(), "Control Plane Authentication Policy")
+		values.ControlPlaneAuthPolicy.String(), "Control Plane Authentication AuthenticationPolicy")
 	proxyCmd.PersistentFlags().StringVar(&customConfigFile, "customConfigFile", values.CustomConfigFile,
 		"Path to the generated configuration file directory")
 	// Log levels are provided by the library https://github.com/gabime/spdlog, used by Envoy.
